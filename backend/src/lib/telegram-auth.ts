@@ -1,4 +1,4 @@
-import { createHmac } from 'crypto'
+import { createHmac, timingSafeEqual } from 'crypto'
 
 export interface TelegramUser {
   id: number
@@ -22,16 +22,30 @@ export function validateInitData(initData: string, botToken: string): TelegramUs
   const secretKey = createHmac('sha256', 'WebAppData').update(botToken).digest()
   const expectedHash = createHmac('sha256', secretKey).update(dataCheckString).digest('hex')
 
-  if (expectedHash !== hash) throw new Error('Invalid hash')
+  const expectedBuf = Buffer.from(expectedHash, 'hex')
+  const receivedBuf = Buffer.from(hash, 'hex')
+  if (expectedBuf.length !== receivedBuf.length || !timingSafeEqual(expectedBuf, receivedBuf)) {
+    throw new Error('Invalid hash')
+  }
 
   const authDate = Number(params.get('auth_date'))
   if (Math.floor(Date.now() / 1000) - authDate > 300) throw new Error('initData expired')
 
+  const rawUser = params.get('user')
+  if (!rawUser) throw new Error('Missing user field')
+  const parsed = JSON.parse(rawUser) as {
+    id: number
+    first_name: string
+    last_name?: string
+    username?: string
+    language_code?: string
+  }
+
   return {
-    id: Number(params.get('id')),
-    first_name: params.get('first_name') ?? '',
-    last_name: params.get('last_name') ?? undefined,
-    username: params.get('username') ?? undefined,
-    language_code: params.get('language_code') ?? undefined,
+    id: parsed.id,
+    first_name: parsed.first_name,
+    last_name: parsed.last_name,
+    username: parsed.username,
+    language_code: parsed.language_code,
   }
 }

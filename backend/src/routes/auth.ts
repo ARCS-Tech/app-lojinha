@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify'
 import { validateInitData } from '../lib/telegram-auth.js'
-import { createHmac } from 'crypto'
+import { createHmac, timingSafeEqual } from 'crypto'
 
 function signUserToken(userId: string): string {
   const secret = process.env.ADMIN_SECRET ?? 'dev-secret'
@@ -13,7 +13,11 @@ export function verifyUserToken(token: string): { userId: string } {
   const secret = process.env.ADMIN_SECRET ?? 'dev-secret'
   const { payload, sig } = JSON.parse(Buffer.from(token, 'base64url').toString())
   const expected = createHmac('sha256', secret).update(payload).digest('hex')
-  if (expected !== sig) throw new Error('Invalid token')
+  const expectedBuf = Buffer.from(expected, 'hex')
+  const receivedBuf = Buffer.from(sig, 'hex')
+  if (expectedBuf.length !== receivedBuf.length || !timingSafeEqual(expectedBuf, receivedBuf)) {
+    throw new Error('Invalid token')
+  }
   return JSON.parse(payload)
 }
 

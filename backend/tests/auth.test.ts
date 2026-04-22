@@ -5,10 +5,11 @@ import { cleanDb } from './helpers/fixtures.js'
 
 function buildValidInitData(botToken: string, userId = 123456789) {
   const authDate = Math.floor(Date.now() / 1000)
-  const dataCheckString = [`auth_date=${authDate}`, `first_name=Test`, `id=${userId}`].sort().join('\n')
+  const user = JSON.stringify({ id: userId, first_name: 'Test' })
+  const dataCheckString = [`auth_date=${authDate}`, `user=${user}`].sort().join('\n')
   const secretKey = createHmac('sha256', 'WebAppData').update(botToken).digest()
   const hash = createHmac('sha256', secretKey).update(dataCheckString).digest('hex')
-  return new URLSearchParams({ auth_date: String(authDate), first_name: 'Test', id: String(userId), hash }).toString()
+  return new URLSearchParams({ auth_date: String(authDate), user, hash }).toString()
 }
 
 describe('POST /auth/telegram', () => {
