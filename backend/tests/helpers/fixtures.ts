@@ -15,13 +15,13 @@ export async function cleanDb() {
 
 export async function createCity(overrides?: Partial<{ name: string; slug: string; isActive: boolean }>) {
   return prisma.city.create({
-    data: { name: 'São Paulo', slug: 'sao-paulo', isActive: true, ...overrides },
+    data: { name: 'São Paulo', slug: `sao-paulo-${Date.now()}`, isActive: true, ...overrides },
   })
 }
 
 export async function createCategory(overrides?: Partial<{ name: string; slug: string }>) {
   return prisma.category.create({
-    data: { name: 'Geral', slug: 'geral', isActive: true, ...overrides },
+    data: { name: 'Geral', slug: `geral-${Date.now()}`, isActive: true, ...overrides },
   })
 }
 
