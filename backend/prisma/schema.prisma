@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id             String   @id @default(cuid())
+  telegramId     BigInt   @unique
+  firstName      String
+  lastName       String?
+  username       String?
+  languageCode   String?
+  selectedCityId String?
+  city           City?    @relation(fields: [selectedCityId], references: [id])
+  orders         Order[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("users")
+}
+
+model City {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  users     User[]
+  orders    Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("cities")
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String    @unique
+  isActive  Boolean   @default(true)
+  sortOrder Int       @default(0)
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("categories")
+}
+
+model Product {
+  id          String         @id @default(cuid())
+  name        String
+  slug        String         @unique
+  description String?
+  price       Decimal        @db.Decimal(10, 2)
+  stock       Int            @default(0)
+  categoryId  String
+  category    Category       @relation(fields: [categoryId], references: [id])
+  isActive    Boolean        @default(true)
+  media       ProductMedia[]
+  orderItems  OrderItem[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@map("products")
+}
+
+model ProductMedia {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  type      String
+  url       String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("product_media")
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  cityId      String
+  city        City        @relation(fields: [cityId], references: [id])
+  status      String      @default("submitted")
+  totalAmount Decimal     @db.Decimal(10, 2)
+  notes       String?
+  items       OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id                  String  @id @default(cuid())
+  orderId             String
+  order               Order   @relation(fields: [orderId], references: [id])
+  productId           String
+  product             Product @relation(fields: [productId], references: [id])
+  productNameSnapshot String
+  unitPriceSnapshot   Decimal @db.Decimal(10, 2)
+  quantity            Int
+  lineTotal           Decimal @db.Decimal(10, 2)
+
+  @@map("order_items")
+}
+
+model StoreSetting {
+  id                 String   @id @default(cuid())
+  storeName          String   @default("Minha Loja")
+  logoUrl            String?
+  supportTelegramUrl String?
+  adminTelegramId    String?
+  defaultLanguage    String   @default("pt")
+  welcomeText        String?
+  updatedAt          DateTime @updatedAt
+
+  @@map("store_settings")
+}
