@@ -5,6 +5,6 @@ export async function requireAdmin(req: FastifyRequest, reply: FastifyReply) {
   if (!authHeader?.startsWith('Bearer ')) return reply.status(401).send({ error: 'Unauthorized' })
   const token = authHeader.slice(7)
   if (token !== (process.env.ADMIN_SECRET ?? 'test-admin')) {
-    return reply.status(401).send({ error: 'Forbidden' })
+    return reply.status(403).send({ error: 'Forbidden' })
   }
 }

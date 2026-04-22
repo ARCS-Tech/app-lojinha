@@ -28,9 +28,10 @@ export async function sendAdminNotification(
     `💬 Falar com cliente: tg://user?id=${order.user.telegramId}`,
   ].join('\n')
 
-  await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+  const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chat_id: adminTelegramId, text }),
   })
+  if (!res.ok) throw new Error(`Telegram API error: ${res.status}`)
 }
