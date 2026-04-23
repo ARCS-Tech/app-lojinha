@@ -12,6 +12,7 @@ import adminOrdersRoute from './routes/admin/orders.js'
 import adminCitiesRoute from './routes/admin/cities.js'
 import adminCategoriesRoute from './routes/admin/categories.js'
 import adminSettingsRoute from './routes/admin/settings.js'
+import usersRoute from './routes/users.js'
 
 export function buildApp() {
   const app = Fastify({ logger: true })
@@ -25,6 +26,7 @@ export function buildApp() {
   app.register(productsRoute, { prefix: '/products' })
   app.register(ordersRoute, { prefix: '/orders' })
   app.register(settingsRoute, { prefix: '/settings' })
+  app.register(usersRoute, { prefix: '/users' })
 
   app.register(adminProductsRoute, { prefix: '/admin/products' })
   app.register(adminOrdersRoute, { prefix: '/admin/orders' })
