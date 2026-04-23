@@ -20,10 +20,12 @@ async function main() {
     create: { name: 'X-Burguer', slug: 'x-burguer', description: 'Hambúrguer artesanal com queijo', price: 24.9, stock: 50, categoryId: lanches.id },
   })
 
-  await prisma.storeSetting.deleteMany()
-  await prisma.storeSetting.create({
-    data: { storeName: 'Lojinha', supportTelegramUrl: 'https://t.me/suporte', defaultLanguage: 'pt', welcomeText: 'Bem-vindo! Selecione sua cidade para começar.' },
-  })
+  const existingSettings = await prisma.storeSetting.findFirst()
+  if (!existingSettings) {
+    await prisma.storeSetting.create({
+      data: { storeName: 'Lojinha', supportTelegramUrl: 'https://t.me/suporte', defaultLanguage: 'pt', welcomeText: 'Bem-vindo! Selecione sua cidade para começar.' },
+    })
+  }
 
   console.log('Seed completed.')
 }
