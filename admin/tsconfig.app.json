@@ -4,7 +4,7 @@
     "target": "es2023",
     "baseUrl": ".",
     "paths": { "@/*": ["./src/*"] },
-    "ignoreDeprecations": "5.0",
+    "ignoreDeprecations": "6.0",
     "lib": ["ES2023", "DOM"],
     "module": "esnext",
     "types": ["vite/client"],
