@@ -5,17 +5,19 @@ const adminSettingsRoute: FastifyPluginAsync = async (app) => {
   app.addHook('preHandler', requireAdmin)
 
   app.get('/', async () => {
-    const s = await app.prisma.storeSetting.findFirst()
+    const s = await app.prisma.storeSetting.findFirst({ orderBy: { updatedAt: 'asc' } })
     if (!s) return app.prisma.storeSetting.create({ data: { storeName: 'Minha Loja' } })
     return s
   })
 
   app.patch('/', async (req, reply) => {
-    const data = req.body as Partial<{
+    const body = req.body as Partial<{
       storeName: string; logoUrl: string; supportTelegramUrl: string
       adminTelegramId: string; defaultLanguage: string; welcomeText: string
     }>
-    let s = await app.prisma.storeSetting.findFirst()
+    const { storeName, logoUrl, supportTelegramUrl, adminTelegramId, defaultLanguage, welcomeText } = body
+    const data = { storeName, logoUrl, supportTelegramUrl, adminTelegramId, defaultLanguage, welcomeText }
+    let s = await app.prisma.storeSetting.findFirst({ orderBy: { updatedAt: 'asc' } })
     if (!s) {
       s = await app.prisma.storeSetting.create({ data: { storeName: 'Minha Loja', ...data } })
     } else {

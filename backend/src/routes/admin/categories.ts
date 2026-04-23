@@ -1,4 +1,5 @@
 import { FastifyPluginAsync } from 'fastify'
+import { Prisma } from '@prisma/client'
 import { requireAdmin } from '../../lib/admin-auth.js'
 
 const adminCategoriesRoute: FastifyPluginAsync = async (app) => {
@@ -16,12 +17,26 @@ const adminCategoriesRoute: FastifyPluginAsync = async (app) => {
   app.patch('/:id', async (req, reply) => {
     const { id } = req.params as { id: string }
     const data = req.body as Partial<{ name: string; slug: string; isActive: boolean; sortOrder: number }>
-    return reply.send(await app.prisma.category.update({ where: { id }, data }))
+    try {
+      return reply.send(await app.prisma.category.update({ where: { id }, data }))
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
+        return reply.status(404).send({ error: 'Not found' })
+      }
+      throw err
+    }
   })
 
   app.delete('/:id', async (req, reply) => {
     const { id } = req.params as { id: string }
-    await app.prisma.category.delete({ where: { id } })
+    try {
+      await app.prisma.category.delete({ where: { id } })
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
+        return reply.status(404).send({ error: 'Not found' })
+      }
+      throw err
+    }
     return reply.status(204).send()
   })
 }
