@@ -17,14 +17,14 @@ export default function Catalog() {
   const { data: categories } = useCategories()
 
   return (
-    <div className="pb-24">
-      <div className="sticky top-0 z-10 bg-tg-bg pt-3 pb-3 px-4 space-y-3">
+    <div className="pb-24 bg-bg min-h-screen">
+      <div className="sticky top-0 z-10 bg-bg pt-3 pb-3 px-4 space-y-3">
         <input
           type="search"
           placeholder={t('search_placeholder')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full px-4 py-2.5 bg-tg-secondary rounded-xl text-sm outline-none"
+          className="w-full px-4 py-2.5 bg-surface-2 border border-border rounded-xl text-sm text-text outline-none focus:border-primary transition-colors placeholder:text-muted"
         />
         {categories && (
           <CategoryBar categories={categories} selected={selectedCategory} onSelect={setSelectedCategory} />
@@ -34,11 +34,11 @@ export default function Catalog() {
       <div className="px-4">
         {isLoading && (
           <div className="grid grid-cols-2 gap-3">
-            {[1, 2, 3, 4].map((i) => <div key={i} className="aspect-[3/4] bg-tg-secondary rounded-2xl animate-pulse" />)}
+            {[1, 2, 3, 4].map((i) => <div key={i} className="aspect-[3/4] bg-surface rounded-2xl animate-pulse" />)}
           </div>
         )}
         {products?.length === 0 && (
-          <div className="text-center py-12 text-tg-hint">
+          <div className="text-center py-12 text-muted">
             <p className="text-4xl mb-3">🔍</p>
             <p>{t('no_products')}</p>
           </div>
