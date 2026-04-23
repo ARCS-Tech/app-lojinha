@@ -24,7 +24,7 @@ export default function Orders() {
               <StatusBadge status={order.status} />
             </div>
             <div className="flex items-center justify-between">
-              <p className="text-xs text-tg-hint">{order.items.length} {order.items.length === 1 ? 'item' : 'items'}</p>
+              <p className="text-xs text-tg-hint">{order.items.length} {order.items.length === 1 ? t('item') : t('items')}</p>
               <p className="font-bold text-tg-button">R$ {Number(order.totalAmount).toFixed(2)}</p>
             </div>
           </button>

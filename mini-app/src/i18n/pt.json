@@ -29,5 +29,12 @@
   "status_cancelled": "Cancelado",
   "authenticating": "Autenticando...",
   "remove": "remover",
-  "back": "←"
+  "back": "←",
+  "auth_error": "Falha na autenticação. Tente novamente.",
+  "retry": "Tentar novamente",
+  "checkout_error": "Erro ao processar pedido. Tente novamente.",
+  "city_select_error": "Erro ao selecionar cidade. Tente novamente.",
+  "product_not_found": "Produto não encontrado",
+  "item": "item",
+  "items": "itens"
 }

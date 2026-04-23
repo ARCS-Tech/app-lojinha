@@ -5,7 +5,7 @@ import { t } from '@/hooks/useTranslation'
 export default function OrderConfirm() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { data: order } = useOrder(id!)
+  const { data: order } = useOrder(id ?? '')
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
       <div className="text-6xl mb-4">✅</div>

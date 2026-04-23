@@ -5,11 +5,26 @@ import { t } from '@/hooks/useTranslation'
 
 export default function AuthGate({ children }: { children: React.ReactNode }) {
   const { token } = useAuthStore()
-  const { login, isLoading } = useAuth()
+  const { login, isLoading, isError } = useAuth()
 
   useEffect(() => { if (!token) login() }, [token, login])
 
   if (!token) {
+    if (isError) {
+      return (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center p-6">
+            <p className="text-red-500 mb-4">{t('auth_error')}</p>
+            <button
+              onClick={() => login()}
+              className="px-6 py-3 bg-tg-button text-tg-button-text rounded-xl font-semibold"
+            >
+              {t('retry')}
+            </button>
+          </div>
+        </div>
+      )
+    }
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">

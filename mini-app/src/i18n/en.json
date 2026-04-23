@@ -29,5 +29,12 @@
   "status_cancelled": "Cancelled",
   "authenticating": "Authenticating...",
   "remove": "remove",
-  "back": "←"
+  "back": "←",
+  "auth_error": "Authentication failed. Please try again.",
+  "retry": "Try again",
+  "checkout_error": "Failed to place order. Please try again.",
+  "city_select_error": "Failed to select city. Please try again.",
+  "product_not_found": "Product not found",
+  "item": "item",
+  "items": "items"
 }

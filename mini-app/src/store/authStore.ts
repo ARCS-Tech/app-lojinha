@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { setAuthToken, clearAuthToken } from '@/lib/api'
 
-interface User {
+export interface User {
   id: string; telegramId: string; firstName: string
   lastName?: string; username?: string; selectedCityId?: string
 }

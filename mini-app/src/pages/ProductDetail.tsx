@@ -31,7 +31,7 @@ export default function ProductDetail() {
   }
 
   if (!product) {
-    return <div className="min-h-screen flex items-center justify-center"><p className="text-tg-hint">Produto não encontrado</p></div>
+    return <div className="min-h-screen flex items-center justify-center"><p className="text-tg-hint">{t('product_not_found')}</p></div>
   }
 
   const outOfStock = product.stock === 0

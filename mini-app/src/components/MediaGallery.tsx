@@ -19,7 +19,9 @@ export default function MediaGallery({ media }: { media: MediaItem[] }) {
           {media.map((m, i) => (
             <button key={i} onClick={() => setCurrent(i)}
               className={`flex-none w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${i === current ? 'border-tg-button' : 'border-transparent'}`}>
-              <img src={m.url} alt="" className="w-full h-full object-cover" />
+              {m.type === 'video'
+                ? <div className="w-full h-full bg-tg-secondary flex items-center justify-center text-2xl">▶️</div>
+                : <img src={m.url} alt="" className="w-full h-full object-cover" />}
             </button>
           ))}
         </div>

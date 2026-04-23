@@ -12,11 +12,15 @@ export default function Cart() {
 
   async function handleCheckout() {
     if (!user?.selectedCityId || items.length === 0) return
-    const order = await checkout.mutateAsync({
-      cityId: user.selectedCityId,
-      items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
-    })
-    navigate(`/orders/${order.id}/confirm`, { replace: true })
+    try {
+      const order = await checkout.mutateAsync({
+        cityId: user.selectedCityId,
+        items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+      })
+      navigate(`/orders/${order.id}/confirm`, { replace: true })
+    } catch {
+      // checkout.isError becomes true; error message rendered below
+    }
   }
 
   if (items.length === 0) {
@@ -60,6 +64,9 @@ export default function Cart() {
           <span className="text-tg-hint">{t('total')}</span>
           <span className="text-xl font-bold">R$ {total().toFixed(2)}</span>
         </div>
+        {checkout.isError && (
+          <p className="text-red-500 text-sm text-center mb-2">{t('checkout_error')}</p>
+        )}
         <button onClick={handleCheckout} disabled={checkout.isPending}
           className="w-full py-4 bg-tg-button text-tg-button-text rounded-xl font-semibold disabled:opacity-50">
           {checkout.isPending ? t('sending_order') : t('confirm_order')}
