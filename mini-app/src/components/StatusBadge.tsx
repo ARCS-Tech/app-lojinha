@@ -8,15 +8,15 @@ const STATUS_KEYS: Record<string, 'status_submitted' | 'status_in_review' | 'sta
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  submitted: 'bg-yellow-100 text-yellow-800',
-  in_review: 'bg-blue-100 text-blue-800',
-  confirmed: 'bg-green-100 text-green-800',
-  cancelled: 'bg-red-100 text-red-800',
+  submitted: 'bg-amber-500/15 text-amber-400',
+  in_review: 'bg-blue-500/15 text-blue-400',
+  confirmed: 'bg-green-500/15 text-green-400',
+  cancelled: 'bg-red-500/15 text-red-400',
 }
 
 export default function StatusBadge({ status }: { status: string }) {
   const key = STATUS_KEYS[status]
   const label = key ? t(key) : status
-  const color = STATUS_COLORS[status] ?? 'bg-gray-100 text-gray-700'
+  const color = STATUS_COLORS[status] ?? 'bg-surface-2 text-muted'
   return <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${color}`}>{label}</span>
 }
