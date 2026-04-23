@@ -2,8 +2,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 
 export interface StoreSetting {
-  id: string; storeName: string; logoUrl?: string; supportTelegramUrl?: string
-  adminTelegramId?: string; defaultLanguage: string; welcomeText?: string
+  id: string
+  storeName: string
+  logoUrl?: string
+  supportTelegramUrl?: string
+  adminTelegramId?: string
+  defaultLanguage: string
+  welcomeText?: string
+  primaryColor: string
+  secondaryColor: string
 }
 
 export function useAdminSettings() {

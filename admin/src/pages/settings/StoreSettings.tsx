@@ -9,7 +9,7 @@ export default function StoreSettings() {
   const { data: settings } = useAdminSettings()
   const update = useUpdateSettings()
   const [saved, setSaved] = useState(false)
-  const { register, handleSubmit, reset } = useForm<FormData>()
+  const { register, handleSubmit, reset, watch, setValue } = useForm<FormData>()
 
   useEffect(() => { if (settings) reset(settings) }, [settings, reset])
 
@@ -40,6 +40,42 @@ export default function StoreSettings() {
           </select>
         </div>
         <div><label className="block text-sm font-medium mb-1">Texto de boas-vindas (bot)</label><textarea {...register('welcomeText')} rows={3} className="w-full px-4 py-2.5 border rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none" /></div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Cor primária</label>
+          <div className="flex items-center gap-3">
+            <input
+              type="color"
+              value={watch('primaryColor') || '#7c3aed'}
+              onChange={(e) => setValue('primaryColor', e.target.value)}
+              className="w-12 h-10 rounded-lg border border-gray-200 cursor-pointer"
+            />
+            <input
+              type="text"
+              {...register('primaryColor')}
+              placeholder="#7c3aed"
+              className="flex-1 px-4 py-2.5 border rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <p className="text-xs text-gray-400 mt-1">Cor dos botões, destaques e preços no Mini App</p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Cor secundária</label>
+          <div className="flex items-center gap-3">
+            <input
+              type="color"
+              value={watch('secondaryColor') || '#a78bfa'}
+              onChange={(e) => setValue('secondaryColor', e.target.value)}
+              className="w-12 h-10 rounded-lg border border-gray-200 cursor-pointer"
+            />
+            <input
+              type="text"
+              {...register('secondaryColor')}
+              placeholder="#a78bfa"
+              className="flex-1 px-4 py-2.5 border rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <p className="text-xs text-gray-400 mt-1">Cor de texto de destaque e preços</p>
+        </div>
         <button type="submit" disabled={update.isPending} className="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold disabled:opacity-50">
           {update.isPending ? 'Salvando...' : 'Salvar configurações'}
         </button>
