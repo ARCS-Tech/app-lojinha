@@ -18,5 +18,12 @@ declare global {
 }
 
 export const tg = window.Telegram?.WebApp
-export const getInitData = (): string => tg?.initData ?? ''
+
+const DEV_USER = { id: 1, first_name: 'Dev', last_name: 'User', username: 'devuser', language_code: 'pt' }
+
+export const getInitData = (): string => {
+  if (tg?.initData) return tg.initData
+  if (import.meta.env.DEV) return `dev:${JSON.stringify(DEV_USER)}`
+  return ''
+}
 export const getTelegramUser = () => tg?.initDataUnsafe?.user

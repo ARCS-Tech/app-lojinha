@@ -27,10 +27,19 @@ const authRoute: FastifyPluginAsync = async (app) => {
     if (!initData) return reply.status(400).send({ error: 'initData required' })
 
     let telegramUser
-    try {
-      telegramUser = validateInitData(initData, process.env.BOT_TOKEN ?? 'test-token')
-    } catch {
-      return reply.status(401).send({ error: 'Invalid initData' })
+    // Dev bypass: accept "dev:<json>" as initData when NODE_ENV is not production
+    if (process.env.NODE_ENV !== 'production' && initData.startsWith('dev:')) {
+      try {
+        telegramUser = JSON.parse(initData.slice(4))
+      } catch {
+        return reply.status(400).send({ error: 'Invalid dev initData' })
+      }
+    } else {
+      try {
+        telegramUser = validateInitData(initData, process.env.BOT_TOKEN ?? 'test-token')
+      } catch {
+        return reply.status(401).send({ error: 'Invalid initData' })
+      }
     }
 
     const user = await app.prisma.user.upsert({
