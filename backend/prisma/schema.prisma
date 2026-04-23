@@ -118,6 +118,8 @@ model StoreSetting {
   adminTelegramId    String?
   defaultLanguage    String   @default("pt")
   welcomeText        String?
+  primaryColor       String   @default("#7c3aed")
+  secondaryColor     String   @default("#a78bfa")
   updatedAt          DateTime @updatedAt
 
   @@map("store_settings")
