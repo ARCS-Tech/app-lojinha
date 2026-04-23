@@ -3,7 +3,7 @@ import { buildOpenStoreKeyboard } from '../lib/keyboards.js'
 
 export async function handleCityCallback(ctx: CallbackQueryContext<Context>) {
   const data = ctx.callbackQuery.data
-  if (!data.startsWith('city:')) return
+  if (!data || !data.startsWith('city:')) return
 
   const miniAppUrl = process.env.MINI_APP_URL ?? ''
   await ctx.answerCallbackQuery()
