@@ -18,6 +18,13 @@ const ordersRoute: FastifyPluginAsync = async (app) => {
 
     try {
       order = await app.prisma.$transaction(async (tx) => {
+        const city = await tx.city.findUnique({ where: { id: cityId } })
+        if (!city || !city.isActive) {
+          const err = new Error('City not available') as any
+          err.statusCode = 400
+          throw err
+        }
+
         const products = await tx.product.findMany({ where: { id: { in: productIds }, isActive: true } })
 
         if (products.length !== productIds.length) {
