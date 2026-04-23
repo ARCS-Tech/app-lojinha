@@ -1,14 +1,11 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { useAdminProduct, useCreateProduct, useUpdateProduct } from '@/hooks/useAdminProducts'
+import { useAdminProduct, useCreateProduct, useUpdateProduct, type CreateProductPayload } from '@/hooks/useAdminProducts'
 import { useAdminCategories } from '@/hooks/useAdminCategories'
 import ProductMediaManager from './ProductMediaManager'
 
-interface FormData {
-  name: string; slug: string; description: string
-  price: number; stock: number; categoryId: string; isActive: boolean
-}
+type FormData = CreateProductPayload & { description: string; isActive: boolean }
 
 export default function ProductForm() {
   const { id } = useParams<{ id?: string }>()
@@ -18,6 +15,7 @@ export default function ProductForm() {
   const { data: categories } = useAdminCategories()
   const create = useCreateProduct()
   const update = useUpdateProduct(id ?? '')
+  const [submitError, setSubmitError] = useState(false)
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>()
 
   useEffect(() => {
@@ -31,9 +29,14 @@ export default function ProductForm() {
   }, [product, reset])
 
   async function onSubmit(data: FormData) {
-    if (isEdit) { await update.mutateAsync(data) }
-    else { await create.mutateAsync(data) }
-    navigate('/products')
+    setSubmitError(false)
+    try {
+      if (isEdit) { await update.mutateAsync(data) }
+      else { await create.mutateAsync(data) }
+      navigate('/products')
+    } catch {
+      setSubmitError(true)
+    }
   }
 
   return (
@@ -59,7 +62,7 @@ export default function ProductForm() {
         <div className="grid grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Preço (R$) *</label>
-            <input type="number" step="0.01" {...register('price', { required: true, valueAsNumber: true })} className="w-full px-4 py-2.5 border rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+            <input type="number" step="0.01" {...register('price', { required: true, valueAsNumber: true, min: 0.01 })} className="w-full px-4 py-2.5 border rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Estoque *</label>
@@ -81,6 +84,7 @@ export default function ProductForm() {
           className="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold disabled:opacity-50">
           {create.isPending || update.isPending ? 'Salvando...' : 'Salvar produto'}
         </button>
+        {submitError && <p className="text-red-500 text-sm text-center">Erro ao salvar produto. Tente novamente.</p>}
       </form>
       {isEdit && id && <ProductMediaManager productId={id} />}
     </div>

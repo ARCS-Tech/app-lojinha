@@ -10,7 +10,7 @@ const NEXT_STATUS: Record<string, string[]> = {
 }
 
 const STATUS_LABELS: Record<string, string> = {
-  in_review: 'Em análise', confirmed: 'Confirmar', cancelled: 'Cancelar'
+  submitted: 'Enviar', in_review: 'Em análise', confirmed: 'Confirmar', cancelled: 'Cancelar'
 }
 
 export default function OrderDetail() {
@@ -19,6 +19,7 @@ export default function OrderDetail() {
   const { data: order, isLoading } = useAdminOrder(id!)
   const updateStatus = useUpdateOrderStatus(id!)
 
+  if (!id) return null
   if (isLoading) return <div className="p-8 text-gray-400">Carregando...</div>
   if (!order) return null
 
@@ -28,7 +29,7 @@ export default function OrderDetail() {
     <div className="p-8 max-w-2xl">
       <div className="flex items-center gap-3 mb-6">
         <button onClick={() => navigate(-1)} className="text-blue-600">←</button>
-        <h1 className="text-2xl font-bold">Pedido #{id!.slice(-6).toUpperCase()}</h1>
+        <h1 className="text-2xl font-bold">Pedido #{id.slice(-6).toUpperCase()}</h1>
       </div>
       <div className="bg-white border rounded-2xl p-6 mb-4 space-y-3">
         <div className="flex justify-between"><span className="text-gray-500 text-sm">Cliente</span><span className="font-medium">{order.user.firstName}{order.user.username ? ` (@${order.user.username})` : ''}</span></div>

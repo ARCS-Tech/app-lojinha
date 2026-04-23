@@ -8,6 +8,16 @@ export interface AdminProduct {
   media: Array<{ id: string; url: string; type: string; sortOrder: number }>
 }
 
+export interface CreateProductPayload {
+  name: string; slug: string; description?: string
+  price: number; stock: number; categoryId: string; isActive?: boolean
+}
+
+export interface UpdateProductPayload {
+  name?: string; slug?: string; description?: string
+  price?: number; stock?: number; categoryId?: string; isActive?: boolean
+}
+
 export function useAdminProducts() {
   return useQuery<AdminProduct[]>({ queryKey: ['admin', 'products'], queryFn: async () => (await api.get('/admin/products')).data })
 }
@@ -19,7 +29,7 @@ export function useAdminProduct(id: string) {
 export function useCreateProduct() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (data: Partial<AdminProduct & { media?: Array<{ type: string; url: string }> }>) => api.post('/admin/products', data).then((r) => r.data),
+    mutationFn: (data: CreateProductPayload) => api.post('/admin/products', data).then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'products'] }),
   })
 }
@@ -27,7 +37,7 @@ export function useCreateProduct() {
 export function useUpdateProduct(id: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (data: Partial<AdminProduct>) => api.patch(`/admin/products/${id}`, data).then((r) => r.data),
+    mutationFn: (data: UpdateProductPayload) => api.patch(`/admin/products/${id}`, data).then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'products'] }),
   })
 }
