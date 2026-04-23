@@ -12,6 +12,7 @@ export interface StoreSettings {
 }
 
 function applyTheme(primaryColor: string, secondaryColor: string) {
+  if (!/^#[0-9A-Fa-f]{6}$/.test(primaryColor) || !/^#[0-9A-Fa-f]{6}$/.test(secondaryColor)) return
   const root = document.documentElement
   root.style.setProperty('--color-primary', primaryColor)
   root.style.setProperty('--color-secondary', secondaryColor)
@@ -33,7 +34,7 @@ export function useStoreSettings() {
     if (query.data?.primaryColor && query.data?.secondaryColor) {
       applyTheme(query.data.primaryColor, query.data.secondaryColor)
     }
-  }, [query.data])
+  }, [query.data?.primaryColor, query.data?.secondaryColor])
 
   return query
 }
