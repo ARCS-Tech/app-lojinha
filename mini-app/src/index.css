@@ -15,6 +15,10 @@
   --color-secondary: #a78bfa;
 }
 
+:root {
+  --bottom-nav-height: 64px;
+}
+
 body {
   background-color: var(--color-bg);
   color: var(--color-text);
