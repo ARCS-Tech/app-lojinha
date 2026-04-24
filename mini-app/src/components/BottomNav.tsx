@@ -10,7 +10,7 @@ const tabs = [
 export default function BottomNav() {
   const location = useLocation()
   const navigate = useNavigate()
-  const cartCount = useCartStore((s) => s.count())
+  const cartCount = useCartStore((s) => s.items.reduce((sum, i) => sum + i.quantity, 0))
 
   return (
     <nav
@@ -28,15 +28,17 @@ export default function BottomNav() {
             className="flex-1 flex flex-col items-center justify-center gap-0.5 relative active:opacity-70"
             style={{ color: isActive ? 'var(--color-primary)' : 'var(--color-muted)' }}
           >
-            <span className="text-xl leading-none">{tab.icon}</span>
-            {tab.path === '/cart' && cartCount > 0 && (
-              <span
-                className="absolute top-2 right-1/4 bg-error text-white text-xs font-bold w-4 h-4 rounded-full flex items-center justify-center"
-                style={{ fontSize: '10px' }}
-              >
-                {cartCount > 9 ? '9+' : cartCount}
-              </span>
-            )}
+            <div className="relative inline-flex">
+              <span className="text-xl leading-none">{tab.icon}</span>
+              {tab.path === '/cart' && cartCount > 0 && (
+                <span
+                  className="absolute -top-1 -right-1 bg-error text-white font-bold w-4 h-4 rounded-full flex items-center justify-center"
+                  style={{ fontSize: '10px' }}
+                >
+                  {cartCount > 9 ? '9+' : cartCount}
+                </span>
+              )}
+            </div>
             <span className="text-xs font-medium">{tab.label}</span>
           </button>
         )
