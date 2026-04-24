@@ -19,7 +19,7 @@ const adminSettingsRoute: FastifyPluginAsync = async (app) => {
     const data = { storeName, logoUrl, supportTelegramUrl, adminTelegramId, defaultLanguage, welcomeText }
     let s = await app.prisma.storeSetting.findFirst({ orderBy: { updatedAt: 'asc' } })
     if (!s) {
-      s = await app.prisma.storeSetting.create({ data: { storeName: 'Minha Loja', ...data } })
+      s = await app.prisma.storeSetting.create({ data: { ...data, storeName: data.storeName ?? 'Minha Loja' } })
     } else {
       s = await app.prisma.storeSetting.update({ where: { id: s.id }, data })
     }
