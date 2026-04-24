@@ -15,7 +15,9 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   const { token } = useAuthStore()
   const { login, isLoading, isError, error } = useAuth()
 
-  useEffect(() => { if (!token) login() }, [token, login])
+  // Always re-authenticate on mount using Telegram initData.
+  // The cached token (if any) is used for API requests while this runs.
+  useEffect(() => { login() }, [])
 
   if (!token) {
     if (isError) {
