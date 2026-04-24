@@ -8,7 +8,10 @@ export function useAuth() {
   const { setAuth, user, token } = useAuthStore()
   const loginMutation = useMutation({
     mutationFn: async () => {
-      const res = await api.post('/auth/telegram', { initData: getInitData() })
+      const initData = getInitData()
+      console.log('[Auth] initData:', initData ? `${initData.slice(0, 30)}...` : 'EMPTY')
+      console.log('[Auth] API URL:', import.meta.env.VITE_API_URL ?? 'NOT SET (will use localhost)')
+      const res = await api.post('/auth/telegram', { initData })
       return res.data as { token: string; user: User }
     },
     onSuccess: ({ token, user }) => setAuth(token, user),
@@ -17,6 +20,7 @@ export function useAuth() {
     login: loginMutation.mutate,
     isLoading: loginMutation.isPending,
     isError: loginMutation.isError,
+    error: loginMutation.error,
     user,
     token,
   }
