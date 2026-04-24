@@ -7,8 +7,8 @@ import { tg } from '@/lib/telegram'
 import App from './App'
 import './index.css'
 
-tg?.ready()
-tg?.expand()
+tg()?.ready()
+tg()?.expand()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
