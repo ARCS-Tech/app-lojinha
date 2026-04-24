@@ -8,11 +8,12 @@ const adminOrdersRoute: FastifyPluginAsync = async (app) => {
 
   app.get('/', async (req) => {
     const { status, cityId } = req.query as { status?: string; cityId?: string }
-    return app.prisma.order.findMany({
+    const orders = await app.prisma.order.findMany({
       where: { ...(status ? { status } : {}), ...(cityId ? { cityId } : {}) },
       include: { items: true, city: true, user: true },
       orderBy: { createdAt: 'desc' },
     })
+    return orders.map(({ user, ...o }) => ({ ...o, user: { ...user, telegramId: user.telegramId.toString() } }))
   })
 
   app.get('/:id', async (req, reply) => {
@@ -22,7 +23,8 @@ const adminOrdersRoute: FastifyPluginAsync = async (app) => {
       include: { items: true, city: true, user: true },
     })
     if (!order) return reply.status(404).send({ error: 'Not found' })
-    return order
+    const { user, ...o } = order
+    return reply.send({ ...o, user: { ...user, telegramId: user.telegramId.toString() } })
   })
 
   app.patch('/:id/status', async (req, reply) => {
