@@ -29,7 +29,7 @@ export function validateInitData(initData: string, botToken: string): TelegramUs
   }
 
   const authDate = Number(params.get('auth_date'))
-  if (Math.floor(Date.now() / 1000) - authDate > 300) throw new Error('initData expired')
+  if (Math.floor(Date.now() / 1000) - authDate > 86400) throw new Error('initData expired')
 
   const rawUser = params.get('user')
   if (!rawUser) throw new Error('Missing user field')
