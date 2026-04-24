@@ -81,7 +81,8 @@ const ordersRoute: FastifyPluginAsync = async (app) => {
       sendAdminNotification(order, settings.adminTelegramId, process.env.BOT_TOKEN).catch(() => {})
     }
 
-    return reply.status(201).send(order)
+    const { user, ...orderWithoutUser } = order
+    return reply.status(201).send(orderWithoutUser)
   })
 
   app.get('/me', { preHandler: requireUser }, async (req) => {
