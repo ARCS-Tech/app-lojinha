@@ -3,8 +3,6 @@ import { useProducts } from '@/hooks/useProducts'
 import { useCategories } from '@/hooks/useCategories'
 import ProductCard from '@/components/ProductCard'
 import CategoryBar from '@/components/CategoryBar'
-import CartFAB from '@/components/CartFAB'
-import SupportFAB from '@/components/SupportFAB'
 import { t } from '@/hooks/useTranslation'
 
 export default function Catalog() {
@@ -17,7 +15,7 @@ export default function Catalog() {
   const { data: categories } = useCategories()
 
   return (
-    <div className="pb-24 bg-bg min-h-screen">
+    <div className="bg-bg min-h-screen">
       <div className="sticky top-0 z-10 bg-bg pt-3 pb-3 px-4 space-y-3">
         <input
           type="search"
@@ -49,9 +47,6 @@ export default function Catalog() {
           </div>
         )}
       </div>
-
-      <CartFAB />
-      <SupportFAB />
     </div>
   )
 }
