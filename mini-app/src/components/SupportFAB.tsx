@@ -7,7 +7,8 @@ export default function SupportFAB() {
   return (
     <button
       onClick={() => tg()?.openTelegramLink(settings.supportTelegramUrl!)}
-      className="fixed bottom-6 left-6 w-14 h-14 bg-surface-2 rounded-full shadow-lg flex items-center justify-center text-2xl z-50 active:opacity-70"
+      className="fixed left-6 w-14 h-14 bg-surface-2 rounded-full shadow-lg flex items-center justify-center text-2xl z-50 active:opacity-70"
+      style={{ bottom: 'calc(var(--bottom-nav-height) + 16px)' }}
     >
       💬
     </button>
