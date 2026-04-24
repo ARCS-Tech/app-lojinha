@@ -1,6 +1,8 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import AuthGate from '@/pages/AuthGate'
 import Header from '@/components/Header'
+import BottomNav from '@/components/BottomNav'
+import SupportFAB from '@/components/SupportFAB'
 import CitySelect from '@/pages/CitySelect'
 import Catalog from '@/pages/Catalog'
 import ProductDetail from '@/pages/ProductDetail'
@@ -17,10 +19,16 @@ function RequireCity({ children }: { children: React.ReactNode }) {
 }
 
 function AppLayout({ children }: { children: React.ReactNode }) {
+  const location = useLocation()
+  const showNav = location.pathname !== '/city'
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <div className="flex-1">{children}</div>
+      <div className="flex-1" style={showNav ? { paddingBottom: 'var(--bottom-nav-height)' } : undefined}>
+        {children}
+      </div>
+      {showNav && <BottomNav />}
+      {showNav && <SupportFAB />}
     </div>
   )
 }
