@@ -37,7 +37,8 @@ const authRoute: FastifyPluginAsync = async (app) => {
     } else {
       try {
         telegramUser = validateInitData(initData, process.env.BOT_TOKEN ?? 'test-token')
-      } catch {
+      } catch (err) {
+        app.log.error({ err: (err as Error).message, initDataLength: initData.length, hasBotToken: !!process.env.BOT_TOKEN }, 'AUTH_FAILED')
         return reply.status(401).send({ error: 'Invalid initData' })
       }
     }
