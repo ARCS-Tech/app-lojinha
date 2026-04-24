@@ -8,6 +8,9 @@ export default function Orders() {
   const { data: orders, isLoading } = useOrders()
   return (
     <div className="p-4 bg-bg min-h-screen">
+      <button onClick={() => navigate('/')} className="text-secondary text-sm mb-4 flex items-center gap-1">
+        ← {t('catalog')}
+      </button>
       <h1 className="text-xl font-bold text-text mb-6">{t('my_orders')}</h1>
       {isLoading && (
         <div className="space-y-3">
