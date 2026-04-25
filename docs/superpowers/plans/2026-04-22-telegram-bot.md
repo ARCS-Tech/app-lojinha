@@ -2,13 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the Telegram bot that handles /start, presents city selection, stores the user's city via the backend, and sends a button to open the Mini App — serving as the entry point for the entire store.
+**Goal:** Build the Telegram bot that handles /start, presents city selection, and sends a button to open the Mini App — serving as the entry point for the store.
 
-**Architecture:** Node.js + TypeScript + grammY framework. The bot runs as a long-polling process (dev) or webhook (prod). It fetches city data from the backend API and uses inline keyboard buttons for city selection. The Mini App is launched via a `web_app` button attached to a KeyboardButton. Bot token and Mini App URL are configured via environment variables.
+**Architecture:** Node.js + TypeScript + grammY. Long-polling in dev, webhook in prod. Fetches cities from backend API. City selection stores `selectedCityId` via backend PATCH endpoint.
 
-**Tech Stack:** Node.js 20, TypeScript, grammY 1.x, tsx (dev runner), dotenv
+**Tech Stack:** Node.js 20, TypeScript, grammY 1.x, tsx, dotenv
 
-**Dependency:** Requires backend from Plan 1 to be running (GET /cities endpoint and POST /auth/telegram).
+**Dependency:** Requires backend running with `GET /cities` and `PATCH /users/me/city` available.
 
 ---
 
@@ -17,13 +17,13 @@
 ```
 bot/
 ├── src/
-│   ├── index.ts                 # Bot entry point, registers handlers, starts polling
+│   ├── index.ts
 │   ├── handlers/
-│   │   ├── start.ts             # /start command handler
-│   │   └── cityCallback.ts      # Callback query handler for city selection
+│   │   ├── start.ts
+│   │   └── cityCallback.ts
 │   └── lib/
-│       ├── api.ts               # Axios client to backend
-│       └── keyboards.ts         # Keyboard builder helpers
+│       ├── api.ts
+│       └── keyboards.ts
 ├── .env.example
 ├── package.json
 └── tsconfig.json
@@ -33,14 +33,11 @@ bot/
 
 ## Task 1: Project Bootstrap
 
-**Files:**
-- Create: `bot/package.json`, `bot/tsconfig.json`, `bot/.env.example`
-
 - [ ] **Step 1: Create bot directory and install dependencies**
 
 ```bash
-mkdir -p /Users/shelfspy/app-lojinha/bot
-cd /Users/shelfspy/app-lojinha/bot
+mkdir -p /Users/hover/Desktop/Programas/app-lojinha/bot
+cd /Users/hover/Desktop/Programas/app-lojinha/bot
 npm init -y
 npm install grammy axios dotenv
 npm install -D typescript tsx @types/node
@@ -66,7 +63,6 @@ npm install -D typescript tsx @types/node
 
 - [ ] **Step 3: Add scripts to package.json**
 
-Replace `"scripts"` section:
 ```json
 "scripts": {
   "dev": "tsx --env-file=.env src/index.ts",
@@ -94,11 +90,7 @@ git commit -m "feat: bootstrap telegram bot project"
 
 ---
 
-## Task 2: Backend API Client + Keyboard Helpers
-
-**Files:**
-- Create: `bot/src/lib/api.ts`
-- Create: `bot/src/lib/keyboards.ts`
+## Task 2: API Client + Keyboard Helpers
 
 - [ ] **Step 1: Create src/lib/api.ts**
 
@@ -117,8 +109,7 @@ export interface City {
 }
 
 export async function getCities(): Promise<City[]> {
-  const res = await api.get<City[]>('/cities')
-  return res.data
+  return (await api.get<City[]>('/cities')).data
 }
 ```
 
@@ -137,9 +128,7 @@ export function buildCityKeyboard(cities: City[]): InlineKeyboard {
 }
 
 export function buildOpenStoreKeyboard(miniAppUrl: string): Keyboard {
-  return new Keyboard()
-    .webApp('🛍️ Abrir loja', miniAppUrl)
-    .resized()
+  return new Keyboard().webApp('🛍️ Abrir loja', miniAppUrl).resized()
 }
 ```
 
@@ -153,10 +142,6 @@ git commit -m "feat: add bot API client and keyboard helpers"
 ---
 
 ## Task 3: Handlers
-
-**Files:**
-- Create: `bot/src/handlers/start.ts`
-- Create: `bot/src/handlers/cityCallback.ts`
 
 - [ ] **Step 1: Create src/handlers/start.ts**
 
@@ -190,20 +175,14 @@ export async function handleCityCallback(ctx: CallbackQueryContext<Context>) {
   const data = ctx.callbackQuery.data
   if (!data.startsWith('city:')) return
 
-  const cityId = data.slice(5)
   const miniAppUrl = process.env.MINI_APP_URL ?? ''
-
   await ctx.answerCallbackQuery()
-
-  await ctx.editMessageText(
-    '✅ Cidade selecionada!\n\nAgora você pode abrir a loja e explorar nosso catálogo:',
-    { reply_markup: { inline_keyboard: [] } }
-  )
-
-  await ctx.reply(
-    '👇 Toque no botão abaixo para abrir a loja:',
-    { reply_markup: buildOpenStoreKeyboard(miniAppUrl) }
-  )
+  await ctx.editMessageText('✅ Cidade selecionada!\n\nAgora você pode abrir a loja:', {
+    reply_markup: { inline_keyboard: [] },
+  })
+  await ctx.reply('👇 Toque no botão abaixo para abrir a loja:', {
+    reply_markup: buildOpenStoreKeyboard(miniAppUrl),
+  })
 }
 ```
 
@@ -217,9 +196,6 @@ git commit -m "feat: add start and city callback handlers"
 ---
 
 ## Task 4: Bot Entry Point
-
-**Files:**
-- Create: `bot/src/index.ts`
 
 - [ ] **Step 1: Create src/index.ts**
 
@@ -236,10 +212,7 @@ const bot = new Bot(token)
 
 bot.command('start', handleStart)
 bot.callbackQuery(/^city:/, handleCityCallback)
-
-bot.catch((err) => {
-  console.error('Bot error:', err)
-})
+bot.catch((err) => console.error('Bot error:', err))
 
 console.log('Bot starting...')
 bot.start()
@@ -249,7 +222,7 @@ bot.start()
 
 ```bash
 git add bot/src/index.ts
-git commit -m "feat: add bot entry point with start command and city callback"
+git commit -m "feat: add bot entry point"
 ```
 
 ---
@@ -258,81 +231,44 @@ git commit -m "feat: add bot entry point with start command and city callback"
 
 - [ ] **Step 1: Ensure backend is running**
 
-In a separate terminal:
 ```bash
-cd /Users/shelfspy/app-lojinha/backend && npm run dev
+cd /Users/hover/Desktop/Programas/app-lojinha/backend && npm run dev
 ```
-
-Expected: Backend listening on port 3000 with seed data (cities available at GET /cities).
 
 - [ ] **Step 2: Set environment variables**
 
 ```bash
-cp /Users/shelfspy/app-lojinha/bot/.env.example /Users/shelfspy/app-lojinha/bot/.env
+cp /Users/hover/Desktop/Programas/app-lojinha/bot/.env.example /Users/hover/Desktop/Programas/app-lojinha/bot/.env
 ```
 
-Edit `bot/.env`:
-```
-BOT_TOKEN=<your real bot token from @BotFather>
-MINI_APP_URL=<your Mini App URL — can be localhost:5173 for dev>
-API_URL=http://localhost:3000
-```
+Edit `bot/.env` with real `BOT_TOKEN` and `MINI_APP_URL`.
 
 - [ ] **Step 3: Start the bot**
 
 ```bash
-cd /Users/shelfspy/app-lojinha/bot && npm run dev
+cd /Users/hover/Desktop/Programas/app-lojinha/bot && npm run dev
 ```
 
-Expected output:
-```
-Bot starting...
-```
+Expected: `Bot starting...`
 
-- [ ] **Step 4: Test the flow in Telegram**
+- [ ] **Step 4: Test in Telegram**
 
-Open Telegram, find your bot, send `/start`.
+Send `/start` to your bot. Expected:
+1. Bot replies with city buttons
+2. Tap city → bot sends "Abrir loja" button
+3. Tap button → Mini App opens
 
-Expected:
-1. Bot replies with "Bem-vindo à Lojinha!" and a list of city buttons (São Paulo, Rio de Janeiro from seed).
-2. Tap a city → bot answers callback, edits message, sends "Abrir loja" web_app button.
-3. Tap "Abrir loja" → Mini App opens (if URL is configured and deployed).
-
-- [ ] **Step 5: Commit any fixes found during testing**
+- [ ] **Step 5: Build check**
 
 ```bash
-git add bot/
-git commit -m "feat: complete telegram bot MVP — start, city select, open store"
-```
-
----
-
-## Task 6: Build Verification
-
-- [ ] **Step 1: TypeScript build check**
-
-```bash
-cd /Users/shelfspy/app-lojinha/bot && npm run build
+cd /Users/hover/Desktop/Programas/app-lojinha/bot && npm run build
 ```
 
 Expected: `dist/` created, no TypeScript errors.
 
-- [ ] **Step 2: Final commit**
+- [ ] **Step 6: Final commit**
 
 ```bash
 git add bot/
-git commit -m "chore: verified bot TypeScript build"
+git commit -m "feat: complete telegram bot MVP"
 ```
-
----
-
-## Notes on Deployment to Render
-
-When deploying to Render (future step):
-
-1. Set env vars `BOT_TOKEN`, `MINI_APP_URL`, `API_URL` in Render dashboard.
-2. Build command: `npm install && npm run build`
-3. Start command: `node dist/index.js`
-4. Service type: **Background Worker** (not Web Service — bot uses long polling, not HTTP).
-
-No webhook configuration needed for the MVP — long polling works fine for initial validation.
