@@ -63,7 +63,7 @@ export default function ProductDetail() {
         )}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-surface border-t border-border">
+      <div className="fixed left-0 right-0 p-4 bg-surface border-t border-border z-50" style={{ bottom: 'var(--bottom-nav-height)' }}>
         <div className="flex items-center gap-4">
           {!outOfStock && (
             <div className="flex items-center gap-3 bg-surface-2 rounded-xl px-1">
