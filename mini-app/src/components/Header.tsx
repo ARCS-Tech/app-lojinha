@@ -16,7 +16,16 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-20 bg-bg backdrop-blur-md border-b border-border px-4 py-3 flex items-center justify-between">
-      <h1 className="font-bold text-lg text-text truncate">{settings?.storeName ?? 'Loja'}</h1>
+      <div className="flex items-center gap-2 min-w-0">
+        {settings?.logoUrl && (
+          <img
+            src={settings.logoUrl}
+            alt={settings.storeName ?? 'Loja'}
+            className="h-8 w-8 rounded object-contain flex-none"
+          />
+        )}
+        <h1 className="font-bold text-lg text-text truncate">{settings?.storeName ?? 'Loja'}</h1>
+      </div>
       <div className="flex gap-1 flex-none">
         {(['pt', 'es', 'en'] as Lang[]).map((l) => (
           <button
