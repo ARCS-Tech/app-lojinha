@@ -76,6 +76,18 @@ export default function ProductForm() {
             </select>
           </div>
         </div>
+        {!isEdit && (
+          <div>
+            <label className="block text-sm font-medium mb-1">URL da imagem</label>
+            <input
+              type="url"
+              placeholder="https://exemplo.com/imagem.jpg"
+              {...register('imageUrl')}
+              className="w-full px-4 py-2.5 border rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <p className="text-xs text-gray-400 mt-1">Deixe em branco para usar o placeholder padrão</p>
+          </div>
+        )}
         <div className="flex items-center gap-2">
           <input type="checkbox" id="isActive" {...register('isActive')} className="rounded" />
           <label htmlFor="isActive" className="text-sm">Produto ativo</label>

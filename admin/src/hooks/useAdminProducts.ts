@@ -11,6 +11,7 @@ export interface AdminProduct {
 export interface CreateProductPayload {
   name: string; slug: string; description?: string
   price: number; stock: number; categoryId: string; isActive?: boolean
+  imageUrl?: string
 }
 
 export interface UpdateProductPayload {
@@ -29,7 +30,13 @@ export function useAdminProduct(id: string) {
 export function useCreateProduct() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (data: CreateProductPayload) => api.post('/admin/products', data).then((r) => r.data),
+    mutationFn: ({ imageUrl, ...data }: CreateProductPayload) => {
+      const payload = {
+        ...data,
+        ...(imageUrl ? { media: [{ type: 'image', url: imageUrl, sortOrder: 0 }] } : {}),
+      }
+      return api.post('/admin/products', payload).then((r) => r.data)
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'products'] }),
   })
 }
