@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import { getTestApp } from './helpers/app.js'
-import { cleanDb, createCategory } from './helpers/fixtures.js'
+import { cleanDb, createCategory, createUser, prisma } from './helpers/fixtures.js'
 
 describe('Admin API', () => {
   const app = getTestApp()
@@ -33,6 +33,50 @@ describe('Admin API', () => {
     })
     expect(res.statusCode).toBe(201)
     expect(res.json().name).toBe('Bebidas')
+  })
+
+  it('GET /admin/access-logs returns 401 without token', async () => {
+    expect((await app.inject({ method: 'GET', url: '/admin/access-logs' })).statusCode).toBe(401)
+  })
+
+  it('GET /admin/access-logs returns empty list when no logs', async () => {
+    const res = await app.inject({ method: 'GET', url: '/admin/access-logs', headers: adminHeaders })
+    expect(res.statusCode).toBe(200)
+    expect(res.json().data).toEqual([])
+    expect(res.json().total).toBe(0)
+  })
+
+  it('GET /admin/access-logs returns logs with pagination', async () => {
+    const user = await createUser()
+    await prisma.accessLog.createMany({
+      data: [
+        { ip: '1.2.3.4', userAgent: 'Mozilla/5.0', userId: user.id },
+        { ip: '5.6.7.8', userAgent: 'TelegramBot', userId: user.id },
+      ],
+    })
+    const res = await app.inject({
+      method: 'GET',
+      url: '/admin/access-logs?page=1&limit=10',
+      headers: adminHeaders,
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json().data).toHaveLength(2)
+    expect(res.json().total).toBe(2)
+    expect(res.json().totalPages).toBe(1)
+  })
+
+  it('GET /admin/access-logs filters by ip', async () => {
+    await prisma.accessLog.createMany({
+      data: [{ ip: '1.2.3.4' }, { ip: '9.9.9.9' }],
+    })
+    const res = await app.inject({
+      method: 'GET',
+      url: '/admin/access-logs?ip=1.2',
+      headers: adminHeaders,
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json().data).toHaveLength(1)
+    expect(res.json().data[0].ip).toBe('1.2.3.4')
   })
 
   it('GET /settings returns public store info', async () => {

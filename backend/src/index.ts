@@ -12,6 +12,7 @@ import adminOrdersRoute from './routes/admin/orders.js'
 import adminCitiesRoute from './routes/admin/cities.js'
 import adminCategoriesRoute from './routes/admin/categories.js'
 import adminSettingsRoute from './routes/admin/settings.js'
+import adminAccessLogsRoute from './routes/admin/access-logs.js'
 import usersRoute from './routes/users.js'
 
 export function buildApp() {
@@ -33,6 +34,7 @@ export function buildApp() {
   app.register(adminCitiesRoute, { prefix: '/admin/cities' })
   app.register(adminCategoriesRoute, { prefix: '/admin/categories' })
   app.register(adminSettingsRoute, { prefix: '/admin/settings' })
+  app.register(adminAccessLogsRoute, { prefix: '/admin/access-logs' })
 
   return app
 }
