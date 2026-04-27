@@ -6,6 +6,7 @@ const navItems = [
   { to: '/orders', label: '🧾 Pedidos' },
   { to: '/cities', label: '🏙️ Cidades' },
   { to: '/categories', label: '🗂️ Categorias' },
+  { to: '/access-logs', label: '📡 Logs de Acesso' },
   { to: '/settings', label: '⚙️ Configurações' },
 ]
 

@@ -12,6 +12,7 @@ import CityForm from '@/pages/cities/CityForm'
 import CategoryList from '@/pages/categories/CategoryList'
 import CategoryForm from '@/pages/categories/CategoryForm'
 import StoreSettings from '@/pages/settings/StoreSettings'
+import AccessLogs from '@/pages/access-logs/AccessLogs'
 
 export default function App() {
   return (
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="categories/new" element={<CategoryForm />} />
         <Route path="categories/:id/edit" element={<CategoryForm />} />
         <Route path="settings" element={<StoreSettings />} />
+        <Route path="access-logs" element={<AccessLogs />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
