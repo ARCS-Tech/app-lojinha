@@ -124,6 +124,32 @@ model AccessLog {
   @@map("access_logs")
 }
 
+model GeoCache {
+  ip            String   @id
+  status        String
+  country       String?
+  countryCode   String?
+  continent     String?
+  continentCode String?
+  region        String?
+  regionName    String?
+  city          String?
+  zip           String?
+  lat           Float?
+  lon           Float?
+  timezone      String?
+  isp           String?
+  org           String?
+  asInfo        String?
+  mobile        Boolean?
+  proxy         Boolean?
+  hosting       Boolean?
+  resolvedAt    DateTime @default(now())
+
+  @@index([resolvedAt])
+  @@map("geo_cache")
+}
+
 model StoreSetting {
   id                 String   @id @default(cuid())
   storeName          String   @default("Minha Loja")

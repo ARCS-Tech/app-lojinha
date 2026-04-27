@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps'
-import { useAdminAccessLogs, type AdminAccessLog } from '@/hooks/useAdminAccessLogs'
-import { ALPHA2_TO_NUMERIC, resolveGeo, type GeoResult } from '@/lib/countryCodeMap'
+import { useAdminAccessLogs, type AdminAccessLog, type GeoData } from '@/hooks/useAdminAccessLogs'
+import { ALPHA2_TO_NUMERIC } from '@/lib/countryCodeMap'
 
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
 
@@ -26,36 +26,25 @@ export default function AccessLogs() {
   const [activeFilters, setActiveFilters] = useState<{ from?: string; to?: string; ip?: string }>({})
   const [mapZoom, setMapZoom] = useState(1)
   const [mapCenter, setMapCenter] = useState<[number, number]>([0, 20])
-  const [selected, setSelected] = useState<{ log: AdminAccessLog; geo: GeoResult } | null>(null)
+  const [selected, setSelected] = useState<{ log: AdminAccessLog; geo: GeoData } | null>(null)
 
   const { data, isLoading } = useAdminAccessLogs({ page, limit: 25, ...activeFilters })
 
-  const geoCache = useRef<Map<string, GeoResult>>(new Map())
-  const [geoMap, setGeoMap] = useState<Map<string, GeoResult>>(new Map())
-
-  useEffect(() => {
-    if (!data) return
-    const unresolvedIps = [...new Set(data.data.map((l) => l.ip))].filter(
-      (ip) => !geoCache.current.has(ip)
-    )
-    unresolvedIps.forEach((ip) => {
-      resolveGeo(ip)
-        .then((result) => {
-          geoCache.current.set(ip, result)
-          setGeoMap(new Map(geoCache.current))
-        })
-        .catch(() => {
-          geoCache.current.set(ip, { status: 'fail' })
-          setGeoMap(new Map(geoCache.current))
-        })
-    })
-  }, [data])
+  const logs = data?.data ?? []
+  const total = data?.total ?? 0
+  const totalPages = data?.totalPages ?? 1
 
   const countByNumericId = new Map<number, number>()
-  geoMap.forEach((geo) => {
-    const numId = geo.countryCode ? ALPHA2_TO_NUMERIC[geo.countryCode] : undefined
+  logs.forEach((log) => {
+    const code = log.geo?.countryCode
+    const numId = code ? ALPHA2_TO_NUMERIC[code] : undefined
     if (numId) countByNumericId.set(numId, (countByNumericId.get(numId) ?? 0) + 1)
   })
+
+  const uniqueIps = new Set(logs.map((l) => l.ip)).size
+  const uniqueCountries = new Set(logs.map((l) => l.geo?.countryCode).filter(Boolean)).size
+  const today = new Date().toDateString()
+  const todayCount = logs.filter((l) => new Date(l.createdAt).toDateString() === today).length
 
   function getColor(numId: number) {
     const count = countByNumericId.get(numId) ?? 0
@@ -74,20 +63,6 @@ export default function AccessLogs() {
       ip: ipFilter || undefined,
     })
   }
-
-  function handleRowClick(log: AdminAccessLog) {
-    const geo = geoMap.get(log.ip)
-    if (geo) setSelected({ log, geo })
-  }
-
-  const logs = data?.data ?? []
-  const total = data?.total ?? 0
-  const totalPages = data?.totalPages ?? 1
-
-  const uniqueIps = new Set(logs.map((l) => l.ip)).size
-  const uniqueCountries = new Set([...geoMap.values()].map((g) => g.countryCode).filter(Boolean)).size
-  const today = new Date().toDateString()
-  const todayCount = logs.filter((l) => new Date(l.createdAt).toDateString() === today).length
 
   return (
     <div className="p-8 space-y-6">
@@ -221,8 +196,7 @@ export default function AccessLogs() {
                 <LogRow
                   key={log.id}
                   log={log}
-                  geo={geoMap.get(log.ip)}
-                  onClick={() => handleRowClick(log)}
+                  onClick={log.geo?.status === 'success' ? () => setSelected({ log, geo: log.geo! }) : undefined}
                 />
               ))}
               {logs.length === 0 && (
@@ -284,26 +258,19 @@ export default function AccessLogs() {
   )
 }
 
-function LogRow({
-  log,
-  geo,
-  onClick,
-}: {
-  log: AdminAccessLog
-  geo: GeoResult | undefined
-  onClick: () => void
-}) {
-  const resolved = geo?.status !== undefined
+function LogRow({ log, onClick }: { log: AdminAccessLog; onClick?: () => void }) {
+  const geo = log.geo
+  const resolved = geo !== null
   const locationText = !resolved
     ? null
-    : geo?.status === 'fail'
+    : geo.status === 'fail'
     ? '—'
-    : `${geo?.countryCode} · ${geo?.city || geo?.country}`
+    : `${geo.countryCode} · ${geo.city || geo.country}`
 
   return (
     <tr
-      onClick={resolved && geo?.status === 'success' ? onClick : undefined}
-      className={`${resolved && geo?.status === 'success' ? 'cursor-pointer hover:bg-blue-50' : 'hover:bg-gray-50'} transition-colors`}
+      onClick={onClick}
+      className={`${onClick ? 'cursor-pointer hover:bg-blue-50' : 'hover:bg-gray-50'} transition-colors`}
     >
       <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">{formatDate(log.createdAt)}</td>
       <td className="px-4 py-3 font-mono text-xs">{log.ip}</td>
@@ -337,7 +304,7 @@ function AccessLogDialog({
   onClose,
 }: {
   log: AdminAccessLog
-  geo: GeoResult
+  geo: GeoData
   onClose: () => void
 }) {
   return (
@@ -370,19 +337,19 @@ function AccessLogDialog({
             <>
               {/* Localização */}
               <Section title="Localização">
-                <Row label="País" value={geo.country && geo.countryCode ? `${geo.country} (${geo.countryCode})` : geo.country} />
-                <Row label="Continente" value={geo.continent && geo.continentCode ? `${geo.continent} (${geo.continentCode})` : geo.continent} />
-                <Row label="Região" value={geo.regionName && geo.region ? `${geo.regionName} (${geo.region})` : geo.regionName} />
-                <Row label="Cidade" value={geo.city} />
-                <Row label="CEP" value={geo.zip} />
+                <Row label="País" value={geo.country && geo.countryCode ? `${geo.country} (${geo.countryCode})` : geo.country ?? undefined} />
+                <Row label="Continente" value={geo.continent && geo.continentCode ? `${geo.continent} (${geo.continentCode})` : geo.continent ?? undefined} />
+                <Row label="Região" value={geo.regionName && geo.region ? `${geo.regionName} (${geo.region})` : geo.regionName ?? undefined} />
+                <Row label="Cidade" value={geo.city ?? undefined} />
+                <Row label="CEP" value={geo.zip ?? undefined} />
                 <Row label="Coordenadas" value={geo.lat != null && geo.lon != null ? `${geo.lat}, ${geo.lon}` : undefined} />
               </Section>
 
               {/* Rede */}
               <Section title="Rede / ISP">
-                <Row label="ISP" value={geo.isp} />
-                <Row label="Organização" value={geo.org} />
-                <Row label="AS" value={geo.as} />
+                <Row label="ISP" value={geo.isp ?? undefined} />
+                <Row label="Organização" value={geo.org ?? undefined} />
+                <Row label="AS" value={geo.asInfo ?? undefined} />
                 <Row label="Proxy / VPN" value={geo.proxy != null ? (geo.proxy ? 'Sim' : 'Não') : undefined} />
                 <Row label="Hosting" value={geo.hosting != null ? (geo.hosting ? 'Sim' : 'Não') : undefined} />
                 <Row label="Mobile" value={geo.mobile != null ? (geo.mobile ? 'Sim' : 'Não') : undefined} />

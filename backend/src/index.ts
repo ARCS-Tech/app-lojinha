@@ -43,11 +43,12 @@ export function buildApp() {
 if (process.argv[1] === new URL(import.meta.url).pathname) {
   const app = buildApp()
 
-  // Daily cleanup at 03:00 — deletes access logs older than 30 days
+  // Daily cleanup at 03:00 — deletes access logs and geo cache older than 30 days
   cron.schedule('0 3 * * *', async () => {
     const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
     await app.prisma.accessLog.deleteMany({ where: { createdAt: { lt: cutoff } } })
-    app.log.info('Access logs cleanup completed')
+    await app.prisma.geoCache.deleteMany({ where: { resolvedAt: { lt: cutoff } } })
+    app.log.info('Access logs and geo cache cleanup completed')
   })
 
   await app.listen({ port: Number(process.env.PORT ?? 3000), host: '0.0.0.0' })

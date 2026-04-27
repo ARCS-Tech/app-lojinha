@@ -5,6 +5,7 @@ const prisma = new PrismaClient()
 export async function cleanDb() {
   await prisma.orderItem.deleteMany()
   await prisma.order.deleteMany()
+  await prisma.geoCache.deleteMany()
   await prisma.accessLog.deleteMany()
   await prisma.productMedia.deleteMany()
   await prisma.product.deleteMany()

@@ -63,28 +63,21 @@ const adminAccessLogsRoute: FastifyPluginAsync = async (app) => {
       }),
     ])
 
+    const uniqueIps = [...new Set(logs.map((l) => l.ip))]
+    const geoEntries = await app.prisma.geoCache.findMany({
+      where: { ip: { in: uniqueIps } },
+    })
+    const geoByIp = new Map(geoEntries.map((g) => [g.ip, g]))
+
     return {
       data: logs.map(({ user, ...log }) => ({
         ...log,
         user: user ? { ...user, telegramId: user.telegramId.toString() } : null,
+        geo: geoByIp.get(log.ip) ?? null,
       })),
       total,
       page: pageNum,
       totalPages: Math.ceil(total / limitNum),
-    }
-  })
-
-  app.get('/geo', async (req, reply) => {
-    const { ip } = req.query as { ip?: string }
-    if (!ip) return reply.status(400).send({ error: 'ip query param required' })
-
-    try {
-      const res = await fetch(
-        `http://ip-api.com/json/${ip}?fields=status,message,continent,continentCode,country,countryCode,region,regionName,city,zip,lat,lon,timezone,isp,org,as,mobile,proxy,hosting,query`
-      )
-      return await res.json()
-    } catch {
-      return { status: 'fail' }
     }
   })
 }

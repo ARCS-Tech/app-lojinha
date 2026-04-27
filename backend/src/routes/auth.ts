@@ -1,6 +1,7 @@
 import { FastifyPluginAsync } from 'fastify'
 import { validateInitData } from '../lib/telegram-auth.js'
 import { createHmac, timingSafeEqual } from 'crypto'
+import { resolveAndCacheGeo } from '../lib/geo.js'
 
 function signUserToken(userId: string): string {
   const secret = process.env.ADMIN_SECRET ?? 'dev-secret'
@@ -69,6 +70,9 @@ const authRoute: FastifyPluginAsync = async (app) => {
         userId: user.id,
       },
     }).catch((err) => app.log.warn({ err }, 'Failed to write access log'))
+
+    resolveAndCacheGeo(req.ip, app.prisma)
+      .catch((err) => app.log.warn({ err }, 'Failed to resolve geo'))
 
     return reply.send({ token, user: { ...user, telegramId: user.telegramId.toString() } })
   })

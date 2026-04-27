@@ -1,5 +1,3 @@
-import { api } from './api'
-
 // ISO 3166-1: alpha-2 → numeric (world-atlas geo.id)
 export const ALPHA2_TO_NUMERIC: Record<string, number> = {
   AF: 4, AL: 8, DZ: 12, AD: 20, AO: 24, AG: 28, AR: 32, AM: 51, AU: 36,
@@ -28,30 +26,3 @@ export const ALPHA2_TO_NUMERIC: Record<string, number> = {
   VE: 862, VN: 704, YE: 887, ZM: 894, ZW: 716,
 }
 
-export interface GeoResult {
-  status: 'success' | 'fail'
-  message?: string
-  continent?: string
-  continentCode?: string
-  country?: string
-  countryCode?: string
-  region?: string
-  regionName?: string
-  city?: string
-  zip?: string
-  lat?: number
-  lon?: number
-  timezone?: string
-  isp?: string
-  org?: string
-  as?: string
-  mobile?: boolean
-  proxy?: boolean
-  hosting?: boolean
-  query?: string
-}
-
-export async function resolveGeo(ip: string): Promise<GeoResult> {
-  const { data } = await api.get<GeoResult>('/admin/access-logs/geo', { params: { ip } })
-  return data
-}
