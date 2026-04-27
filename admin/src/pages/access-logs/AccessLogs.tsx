@@ -26,7 +26,7 @@ export default function AccessLogs() {
   const [activeFilters, setActiveFilters] = useState<{ from?: string; to?: string; ip?: string }>({})
   const [mapZoom, setMapZoom] = useState(1)
   const [mapCenter, setMapCenter] = useState<[number, number]>([0, 20])
-  const [selected, setSelected] = useState<{ log: AdminAccessLog; geo: GeoData } | null>(null)
+  const [selected, setSelected] = useState<{ log: AdminAccessLog; geo: GeoData | null } | null>(null)
 
   const { data, isLoading } = useAdminAccessLogs({ page, limit: 25, ...activeFilters })
 
@@ -196,7 +196,7 @@ export default function AccessLogs() {
                 <LogRow
                   key={log.id}
                   log={log}
-                  onClick={log.geo?.status === 'success' ? () => setSelected({ log, geo: log.geo! }) : undefined}
+                  onClick={() => setSelected({ log, geo: log.geo })}
                 />
               ))}
               {logs.length === 0 && (
@@ -260,9 +260,8 @@ export default function AccessLogs() {
 
 function LogRow({ log, onClick }: { log: AdminAccessLog; onClick?: () => void }) {
   const geo = log.geo
-  const resolved = geo !== null
-  const locationText = !resolved
-    ? null
+  const locationText = !geo
+    ? '—'
     : geo.status === 'fail'
     ? '—'
     : `${geo.countryCode} · ${geo.city || geo.country}`
@@ -270,16 +269,12 @@ function LogRow({ log, onClick }: { log: AdminAccessLog; onClick?: () => void })
   return (
     <tr
       onClick={onClick}
-      className={`${onClick ? 'cursor-pointer hover:bg-blue-50' : 'hover:bg-gray-50'} transition-colors`}
+      className="cursor-pointer hover:bg-blue-50 transition-colors"
     >
       <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">{formatDate(log.createdAt)}</td>
       <td className="px-4 py-3 font-mono text-xs">{log.ip}</td>
       <td className="px-4 py-3">
-        {locationText !== null ? (
-          <span className="text-xs text-gray-600">{locationText}</span>
-        ) : (
-          <span className="text-xs text-gray-300 italic">resolvendo...</span>
-        )}
+        <span className="text-xs text-gray-600">{locationText}</span>
       </td>
       <td className="px-4 py-3">
         {log.user ? (
@@ -304,7 +299,7 @@ function AccessLogDialog({
   onClose,
 }: {
   log: AdminAccessLog
-  geo: GeoData
+  geo: GeoData | null
   onClose: () => void
 }) {
   return (
@@ -331,11 +326,13 @@ function AccessLogDialog({
         </div>
 
         <div className="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
-          {geo.status === 'fail' ? (
-            <p className="text-sm text-gray-400 text-center py-4">Geolocalização indisponível para este IP.</p>
+          {/* Geo sections — only when geo data is available */}
+          {!geo || geo.status === 'fail' ? (
+            <p className="text-sm text-gray-400 text-center py-2">
+              {!geo ? 'Dados de geolocalização não disponíveis para este registro.' : 'Geolocalização indisponível para este IP.'}
+            </p>
           ) : (
             <>
-              {/* Localização */}
               <Section title="Localização">
                 <Row label="País" value={geo.country && geo.countryCode ? `${geo.country} (${geo.countryCode})` : geo.country ?? undefined} />
                 <Row label="Continente" value={geo.continent && geo.continentCode ? `${geo.continent} (${geo.continentCode})` : geo.continent ?? undefined} />
@@ -345,7 +342,6 @@ function AccessLogDialog({
                 <Row label="Coordenadas" value={geo.lat != null && geo.lon != null ? `${geo.lat}, ${geo.lon}` : undefined} />
               </Section>
 
-              {/* Rede */}
               <Section title="Rede / ISP">
                 <Row label="ISP" value={geo.isp ?? undefined} />
                 <Row label="Organização" value={geo.org ?? undefined} />
@@ -355,26 +351,25 @@ function AccessLogDialog({
                 <Row label="Mobile" value={geo.mobile != null ? (geo.mobile ? 'Sim' : 'Não') : undefined} />
               </Section>
 
-              {/* Fuso horário */}
               {geo.timezone && (
                 <Section title="Fuso Horário">
                   <Row label="Timezone" value={geo.timezone} />
                 </Section>
               )}
-
-              {/* Acesso */}
-              <Section title="Acesso">
-                {log.user && (
-                  <>
-                    <Row label="Usuário" value={log.user.firstName} />
-                    {log.user.username && <Row label="Username" value={`@${log.user.username}`} />}
-                    <Row label="Telegram ID" value={log.user.telegramId} />
-                  </>
-                )}
-                <Row label="User-Agent" value={log.userAgent ?? undefined} mono />
-              </Section>
             </>
           )}
+
+          {/* Acesso — always shown */}
+          <Section title="Acesso">
+            {log.user && (
+              <>
+                <Row label="Usuário" value={log.user.firstName} />
+                {log.user.username && <Row label="Username" value={`@${log.user.username}`} />}
+                <Row label="Telegram ID" value={log.user.telegramId} />
+              </>
+            )}
+            <Row label="User-Agent" value={log.userAgent ?? undefined} mono />
+          </Section>
         </div>
       </div>
     </div>
