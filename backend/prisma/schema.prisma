@@ -17,6 +17,7 @@ model User {
   selectedCityId String?
   city           City?    @relation(fields: [selectedCityId], references: [id])
   orders         Order[]
+  accessLogs     AccessLog[]
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -108,6 +109,19 @@ model OrderItem {
   lineTotal           Decimal @db.Decimal(10, 2)
 
   @@map("order_items")
+}
+
+model AccessLog {
+  id        Int      @id @default(autoincrement())
+  ip        String
+  userAgent String?
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([ip])
+  @@map("access_logs")
 }
 
 model StoreSetting {
