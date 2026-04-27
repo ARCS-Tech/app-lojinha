@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { ComposableMap, Geographies, Geography } from 'react-simple-maps'
+import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps'
 import { useAdminAccessLogs, type AdminAccessLog } from '@/hooks/useAdminAccessLogs'
 import { ALPHA2_TO_NUMERIC, resolveGeo, type GeoResult } from '@/lib/countryCodeMap'
 
@@ -24,6 +24,8 @@ export default function AccessLogs() {
   const [toDate, setToDate] = useState('')
   const [ipFilter, setIpFilter] = useState('')
   const [activeFilters, setActiveFilters] = useState<{ from?: string; to?: string; ip?: string }>({})
+  const [mapZoom, setMapZoom] = useState(1)
+  const [mapCenter, setMapCenter] = useState<[number, number]>([0, 20])
 
   const { data, isLoading } = useAdminAccessLogs({ page, limit: 25, ...activeFilters })
 
@@ -103,24 +105,51 @@ export default function AccessLogs() {
       </div>
 
       <div className="bg-white border rounded-xl p-5">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
-          Distribuição geográfica
-        </p>
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+            Distribuição geográfica
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setMapZoom((z) => Math.min(8, +(z * 1.5).toFixed(2)))}
+              className="w-7 h-7 flex items-center justify-center border rounded text-gray-500 hover:bg-gray-50 text-base leading-none"
+              title="Zoom in"
+            >+</button>
+            <button
+              onClick={() => { setMapZoom(1); setMapCenter([0, 20]) }}
+              className="px-2 h-7 flex items-center justify-center border rounded text-gray-400 hover:bg-gray-50 text-xs"
+              title="Reset"
+            >Reset</button>
+            <button
+              onClick={() => setMapZoom((z) => Math.max(1, +(z / 1.5).toFixed(2)))}
+              className="w-7 h-7 flex items-center justify-center border rounded text-gray-500 hover:bg-gray-50 text-base leading-none"
+              title="Zoom out"
+            >−</button>
+          </div>
+        </div>
         <ComposableMap projectionConfig={{ scale: 140 }} height={280}>
-          <Geographies geography={GEO_URL}>
-            {({ geographies }) =>
-              geographies.map((geo) => (
-                <Geography
-                  key={geo.rsmKey}
-                  geography={geo}
-                  fill={getColor(Number(geo.id))}
-                  stroke="#fff"
-                  strokeWidth={0.4}
-                  style={{ default: { outline: 'none' }, hover: { outline: 'none', opacity: 0.8 }, pressed: { outline: 'none' } }}
-                />
-              ))
-            }
-          </Geographies>
+          <ZoomableGroup
+            zoom={mapZoom}
+            center={mapCenter}
+            minZoom={1}
+            maxZoom={8}
+            onMoveEnd={({ coordinates, zoom }) => { setMapCenter(coordinates); setMapZoom(zoom) }}
+          >
+            <Geographies geography={GEO_URL}>
+              {({ geographies }) =>
+                geographies.map((geo) => (
+                  <Geography
+                    key={geo.rsmKey}
+                    geography={geo}
+                    fill={getColor(Number(geo.id))}
+                    stroke="#fff"
+                    strokeWidth={0.4}
+                    style={{ default: { outline: 'none' }, hover: { outline: 'none', opacity: 0.8 }, pressed: { outline: 'none' } }}
+                  />
+                ))
+              }
+            </Geographies>
+          </ZoomableGroup>
         </ComposableMap>
         <div className="flex gap-4 mt-2 flex-wrap">
           {[
