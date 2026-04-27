@@ -4,7 +4,7 @@ import { requireAdmin } from '../../lib/admin-auth.js'
 const adminAccessLogsRoute: FastifyPluginAsync = async (app) => {
   app.addHook('preHandler', requireAdmin)
 
-  app.get('/', async (req) => {
+  app.get('/', async (req, reply) => {
     const {
       page = '1',
       limit = '25',
@@ -21,16 +21,26 @@ const adminAccessLogsRoute: FastifyPluginAsync = async (app) => {
       userId?: string
     }
 
-    const pageNum = Math.max(1, parseInt(page, 10))
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)))
+    const pageNum = Math.max(1, parseInt(page, 10) || 1)
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 25))
     const skip = (pageNum - 1) * limitNum
 
+    const fromDate = from ? new Date(from) : undefined
+    const toDate = to ? new Date(to) : undefined
+
+    if (fromDate && isNaN(fromDate.getTime())) {
+      return reply.status(400).send({ error: 'Invalid `from` date' })
+    }
+    if (toDate && isNaN(toDate.getTime())) {
+      return reply.status(400).send({ error: 'Invalid `to` date' })
+    }
+
     const where = {
-      ...(from || to
+      ...(fromDate || toDate
         ? {
             createdAt: {
-              ...(from ? { gte: new Date(from) } : {}),
-              ...(to ? { lte: new Date(to) } : {}),
+              ...(fromDate ? { gte: fromDate } : {}),
+              ...(toDate ? { lte: toDate } : {}),
             },
           }
         : {}),

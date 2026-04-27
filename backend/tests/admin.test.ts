@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import { getTestApp } from './helpers/app.js'
-import { cleanDb, createCategory, createUser, prisma } from './helpers/fixtures.js'
+import { cleanDb, createUser, prisma } from './helpers/fixtures.js'
 
 describe('Admin API', () => {
   const app = getTestApp()
