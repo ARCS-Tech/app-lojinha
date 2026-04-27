@@ -36,13 +36,16 @@ export default function AccessLogs() {
 
   const countByNumericId = new Map<number, number>()
   logs.forEach((log) => {
-    const code = log.geo?.countryCode
+    if (log.geo?.status !== 'success') return
+    const code = log.geo.countryCode
     const numId = code ? ALPHA2_TO_NUMERIC[code] : undefined
     if (numId) countByNumericId.set(numId, (countByNumericId.get(numId) ?? 0) + 1)
   })
 
   const uniqueIps = new Set(logs.map((l) => l.ip)).size
-  const uniqueCountries = new Set(logs.map((l) => l.geo?.countryCode).filter(Boolean)).size
+  const uniqueCountries = new Set(
+    logs.filter((l) => l.geo?.status === 'success').map((l) => l.geo!.countryCode).filter(Boolean)
+  ).size
   const today = new Date().toDateString()
   const todayCount = logs.filter((l) => new Date(l.createdAt).toDateString() === today).length
 
@@ -260,11 +263,13 @@ export default function AccessLogs() {
 
 function LogRow({ log, onClick }: { log: AdminAccessLog; onClick?: () => void }) {
   const geo = log.geo
-  const locationText = !geo
+  const hasGeo = geo?.status === 'success'
+  const city = geo?.city || geo?.regionName || null
+  const locationText = !hasGeo
     ? '—'
-    : geo.status === 'fail'
-    ? '—'
-    : `${geo.countryCode} · ${geo.city || geo.country}`
+    : city && geo?.countryCode
+    ? `${geo.countryCode} · ${city}`
+    : geo?.country ?? '—'
 
   return (
     <tr
@@ -326,17 +331,13 @@ function AccessLogDialog({
         </div>
 
         <div className="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
-          {/* Geo sections — only when geo data is available */}
-          {!geo || geo.status === 'fail' ? (
-            <p className="text-sm text-gray-400 text-center py-2">
-              {!geo ? 'Dados de geolocalização não disponíveis para este registro.' : 'Geolocalização indisponível para este IP.'}
-            </p>
-          ) : (
+          {/* Geo sections — only when geo lookup succeeded */}
+          {geo?.status === 'success' ? (
             <>
               <Section title="Localização">
-                <Row label="País" value={geo.country && geo.countryCode ? `${geo.country} (${geo.countryCode})` : geo.country ?? undefined} />
-                <Row label="Continente" value={geo.continent && geo.continentCode ? `${geo.continent} (${geo.continentCode})` : geo.continent ?? undefined} />
-                <Row label="Região" value={geo.regionName && geo.region ? `${geo.regionName} (${geo.region})` : geo.regionName ?? undefined} />
+                <Row label="País" value={[geo.country, geo.countryCode && `(${geo.countryCode})`].filter(Boolean).join(' ') || undefined} />
+                <Row label="Continente" value={[geo.continent, geo.continentCode && `(${geo.continentCode})`].filter(Boolean).join(' ') || undefined} />
+                <Row label="Região" value={[geo.regionName, geo.region && `(${geo.region})`].filter(Boolean).join(' ') || undefined} />
                 <Row label="Cidade" value={geo.city ?? undefined} />
                 <Row label="CEP" value={geo.zip ?? undefined} />
                 <Row label="Coordenadas" value={geo.lat != null && geo.lon != null ? `${geo.lat}, ${geo.lon}` : undefined} />
@@ -357,6 +358,10 @@ function AccessLogDialog({
                 </Section>
               )}
             </>
+          ) : (
+            <p className="text-sm text-gray-400 text-center py-2">
+              {!geo ? 'Dados de geolocalização não disponíveis para este registro.' : 'Geolocalização indisponível para este IP.'}
+            </p>
           )}
 
           {/* Acesso — always shown */}
