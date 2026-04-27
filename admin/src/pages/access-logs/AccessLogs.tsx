@@ -26,6 +26,7 @@ export default function AccessLogs() {
   const [activeFilters, setActiveFilters] = useState<{ from?: string; to?: string; ip?: string }>({})
   const [mapZoom, setMapZoom] = useState(1)
   const [mapCenter, setMapCenter] = useState<[number, number]>([0, 20])
+  const [selected, setSelected] = useState<{ log: AdminAccessLog; geo: GeoResult } | null>(null)
 
   const { data, isLoading } = useAdminAccessLogs({ page, limit: 25, ...activeFilters })
 
@@ -44,7 +45,7 @@ export default function AccessLogs() {
           setGeoMap(new Map(geoCache.current))
         })
         .catch(() => {
-          geoCache.current.set(ip, { status: 'fail', countryCode: '', country: '', city: '' })
+          geoCache.current.set(ip, { success: false })
           setGeoMap(new Map(geoCache.current))
         })
     })
@@ -52,7 +53,7 @@ export default function AccessLogs() {
 
   const countByNumericId = new Map<number, number>()
   geoMap.forEach((geo) => {
-    const numId = ALPHA2_TO_NUMERIC[geo.countryCode]
+    const numId = geo.country_code ? ALPHA2_TO_NUMERIC[geo.country_code] : undefined
     if (numId) countByNumericId.set(numId, (countByNumericId.get(numId) ?? 0) + 1)
   })
 
@@ -74,12 +75,17 @@ export default function AccessLogs() {
     })
   }
 
+  function handleRowClick(log: AdminAccessLog) {
+    const geo = geoMap.get(log.ip)
+    if (geo) setSelected({ log, geo })
+  }
+
   const logs = data?.data ?? []
   const total = data?.total ?? 0
   const totalPages = data?.totalPages ?? 1
 
   const uniqueIps = new Set(logs.map((l) => l.ip)).size
-  const uniqueCountries = new Set([...geoMap.values()].map((g) => g.countryCode).filter(Boolean)).size
+  const uniqueCountries = new Set([...geoMap.values()].map((g) => g.country_code).filter(Boolean)).size
   const today = new Date().toDateString()
   const todayCount = logs.filter((l) => new Date(l.createdAt).toDateString() === today).length
 
@@ -212,7 +218,12 @@ export default function AccessLogs() {
             </thead>
             <tbody className="divide-y">
               {logs.map((log) => (
-                <LogRow key={log.id} log={log} geo={geoMap.get(log.ip)} />
+                <LogRow
+                  key={log.id}
+                  log={log}
+                  geo={geoMap.get(log.ip)}
+                  onClick={() => handleRowClick(log)}
+                />
               ))}
               {logs.length === 0 && (
                 <tr>
@@ -261,19 +272,39 @@ export default function AccessLogs() {
           </div>
         </div>
       </div>
+
+      {selected && (
+        <AccessLogDialog
+          log={selected.log}
+          geo={selected.geo}
+          onClose={() => setSelected(null)}
+        />
+      )}
     </div>
   )
 }
 
-function LogRow({ log, geo }: { log: AdminAccessLog; geo: GeoResult | undefined }) {
-  const locationText = !geo
+function LogRow({
+  log,
+  geo,
+  onClick,
+}: {
+  log: AdminAccessLog
+  geo: GeoResult | undefined
+  onClick: () => void
+}) {
+  const resolved = geo?.success !== undefined
+  const locationText = !resolved
     ? null
-    : geo.status === 'fail'
+    : !geo?.success
     ? '—'
-    : `${geo.countryCode} · ${geo.city || geo.country}`
+    : `${geo.country_code} · ${geo.city || geo.country}`
 
   return (
-    <tr className="hover:bg-gray-50">
+    <tr
+      onClick={resolved ? onClick : undefined}
+      className={`${resolved ? 'cursor-pointer hover:bg-blue-50' : 'hover:bg-gray-50'} transition-colors`}
+    >
       <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">{formatDate(log.createdAt)}</td>
       <td className="px-4 py-3 font-mono text-xs">{log.ip}</td>
       <td className="px-4 py-3">
@@ -297,5 +328,119 @@ function LogRow({ log, geo }: { log: AdminAccessLog; geo: GeoResult | undefined 
       </td>
       <td className="px-4 py-3 text-xs text-gray-400">{parseUserAgent(log.userAgent)}</td>
     </tr>
+  )
+}
+
+function AccessLogDialog({
+  log,
+  geo,
+  onClose,
+}: {
+  log: AdminAccessLog
+  geo: GeoResult
+  onClose: () => void
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b">
+          <div className="flex items-center gap-3">
+            {geo.flag?.emoji && (
+              <span className="text-3xl leading-none">{geo.flag.emoji}</span>
+            )}
+            <div>
+              <p className="font-semibold text-gray-800 font-mono">{log.ip}</p>
+              <p className="text-xs text-gray-400">{formatDate(log.createdAt)}</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 text-xl leading-none w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
+          {!geo.success ? (
+            <p className="text-sm text-gray-400 text-center py-4">Geolocalização indisponível para este IP.</p>
+          ) : (
+            <>
+              {/* Localização */}
+              <Section title="Localização">
+                <Row label="País" value={geo.country && geo.country_code ? `${geo.country} (${geo.country_code})` : geo.country} />
+                <Row label="Continente" value={geo.continent} />
+                <Row label="Região" value={geo.region && geo.region_code ? `${geo.region} (${geo.region_code})` : geo.region} />
+                <Row label="Cidade" value={geo.city} />
+                <Row label="CEP" value={geo.postal} />
+                <Row label="Coordenadas" value={geo.latitude != null && geo.longitude != null ? `${geo.latitude}, ${geo.longitude}` : undefined} />
+                <Row label="Capital" value={geo.capital} />
+                <Row label="União Europeia" value={geo.is_eu != null ? (geo.is_eu ? 'Sim' : 'Não') : undefined} />
+              </Section>
+
+              {/* Rede */}
+              {geo.connection && (
+                <Section title="Rede / ISP">
+                  <Row label="ISP" value={geo.connection.isp} />
+                  <Row label="Organização" value={geo.connection.org} />
+                  <Row label="ASN" value={geo.connection.asn ? `AS${geo.connection.asn}` : undefined} />
+                  <Row label="Domínio" value={geo.connection.domain} />
+                </Section>
+              )}
+
+              {/* Fuso horário */}
+              {geo.timezone && (
+                <Section title="Fuso Horário">
+                  <Row label="Timezone" value={geo.timezone.id} />
+                  <Row label="Abreviação" value={geo.timezone.abbr} />
+                  <Row label="UTC" value={geo.timezone.utc} />
+                  <Row label="Horário de verão" value={geo.timezone.is_dst ? 'Sim' : 'Não'} />
+                </Section>
+              )}
+
+              {/* Acesso */}
+              <Section title="Acesso">
+                <Row label="Tipo de IP" value={geo.type} />
+                <Row label="DDI" value={geo.calling_code ? `+${geo.calling_code}` : undefined} />
+                {log.user && (
+                  <>
+                    <Row label="Usuário" value={log.user.firstName} />
+                    {log.user.username && <Row label="Username" value={`@${log.user.username}`} />}
+                    <Row label="Telegram ID" value={log.user.telegramId} />
+                  </>
+                )}
+                <Row label="User-Agent" value={log.userAgent ?? undefined} mono />
+              </Section>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">{title}</p>
+      <div className="bg-gray-50 rounded-xl divide-y divide-gray-100">{children}</div>
+    </div>
+  )
+}
+
+function Row({ label, value, mono }: { label: string; value?: string | number; mono?: boolean }) {
+  if (value == null || value === '') return null
+  return (
+    <div className="flex items-start justify-between gap-4 px-3 py-2">
+      <span className="text-xs text-gray-500 shrink-0">{label}</span>
+      <span className={`text-xs text-gray-800 text-right break-all ${mono ? 'font-mono' : ''}`}>{value}</span>
+    </div>
   )
 }

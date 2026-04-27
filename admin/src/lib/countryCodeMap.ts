@@ -29,10 +29,25 @@ export const ALPHA2_TO_NUMERIC: Record<string, number> = {
 }
 
 export interface GeoResult {
-  countryCode: string
-  country: string
-  city: string
-  status: 'success' | 'fail'
+  success: boolean
+  ip?: string
+  type?: string
+  continent?: string
+  continent_code?: string
+  country?: string
+  country_code?: string
+  region?: string
+  region_code?: string
+  city?: string
+  postal?: string
+  latitude?: number
+  longitude?: number
+  is_eu?: boolean
+  calling_code?: string
+  capital?: string
+  flag?: { img: string; emoji: string }
+  connection?: { asn: number; org: string; isp: string; domain: string }
+  timezone?: { id: string; abbr: string; is_dst: boolean; offset: number; utc: string }
 }
 
 export async function resolveGeo(ip: string): Promise<GeoResult> {
