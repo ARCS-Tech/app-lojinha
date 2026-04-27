@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import { createHmac } from 'crypto'
 import { getTestApp } from './helpers/app.js'
-import { cleanDb } from './helpers/fixtures.js'
+import { cleanDb, prisma } from './helpers/fixtures.js'
 
 function buildValidInitData(botToken: string, userId = 123456789) {
   const authDate = Math.floor(Date.now() / 1000)
@@ -59,7 +59,7 @@ describe('POST /auth/telegram', () => {
     // Aguardar a gravação fire-and-forget
     await new Promise((r) => setTimeout(r, 50))
 
-    const { prisma: testPrisma } = await import('./helpers/fixtures.js')
+    const testPrisma = prisma
     const logs = await testPrisma.accessLog.findMany({ where: { user: { telegramId: BigInt(777) } } })
     expect(logs).toHaveLength(1)
     expect(logs[0].userAgent).toBe('TelegramBot/Test')
