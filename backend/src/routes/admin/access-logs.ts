@@ -73,6 +73,24 @@ const adminAccessLogsRoute: FastifyPluginAsync = async (app) => {
       totalPages: Math.ceil(total / limitNum),
     }
   })
+
+  app.get('/geo', async (req, reply) => {
+    const { ip } = req.query as { ip?: string }
+    if (!ip) return reply.status(400).send({ error: 'ip query param required' })
+
+    try {
+      const res = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,countryCode,city`)
+      const data = await res.json() as { status: string; country?: string; countryCode?: string; city?: string }
+      return {
+        status: data.status === 'success' ? 'success' : 'fail',
+        countryCode: data.countryCode ?? '',
+        country: data.country ?? '',
+        city: data.city ?? '',
+      }
+    } catch {
+      return { status: 'fail', countryCode: '', country: '', city: '' }
+    }
+  })
 }
 
 export default adminAccessLogsRoute
