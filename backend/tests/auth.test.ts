@@ -45,4 +45,23 @@ describe('POST /auth/telegram', () => {
     const res = await app.inject({ method: 'POST', url: '/auth/telegram', body: { initData } })
     expect(res.statusCode).toBe(200)
   })
+
+  it('creates an access log on successful auth', async () => {
+    const initData = buildValidInitData(process.env.BOT_TOKEN ?? 'test-token', 777)
+    const res = await app.inject({
+      method: 'POST',
+      url: '/auth/telegram',
+      body: { initData },
+      headers: { 'user-agent': 'TelegramBot/Test' },
+    })
+    expect(res.statusCode).toBe(200)
+
+    // Aguardar a gravação fire-and-forget
+    await new Promise((r) => setTimeout(r, 50))
+
+    const { prisma: testPrisma } = await import('./helpers/fixtures.js')
+    const logs = await testPrisma.accessLog.findMany({ where: { user: { telegramId: BigInt(777) } } })
+    expect(logs).toHaveLength(1)
+    expect(logs[0].userAgent).toBe('TelegramBot/Test')
+  })
 })

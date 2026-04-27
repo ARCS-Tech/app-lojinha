@@ -61,6 +61,15 @@ const authRoute: FastifyPluginAsync = async (app) => {
     })
 
     const token = signUserToken(user.id)
+
+    app.prisma.accessLog.create({
+      data: {
+        ip: req.ip,
+        userAgent: req.headers['user-agent']?.slice(0, 500) ?? null,
+        userId: user.id,
+      },
+    }).catch((err) => app.log.warn({ err }, 'Failed to write access log'))
+
     return reply.send({ token, user: { ...user, telegramId: user.telegramId.toString() } })
   })
 }
