@@ -60,10 +60,10 @@ export default function AccessLogs() {
   function getColor(numId: number) {
     const count = countByNumericId.get(numId) ?? 0
     if (count === 0) return '#e2e8f0'
-    if (count <= 10) return '#bfdbfe'
-    if (count <= 50) return '#60a5fa'
-    if (count <= 200) return '#2563eb'
-    return '#1e3a8a'
+    if (count <= 10) return '#fecaca'
+    if (count <= 50) return '#f87171'
+    if (count <= 200) return '#dc2626'
+    return '#7f1d1d'
   }
 
   function applyFilters() {
@@ -159,10 +159,10 @@ export default function AccessLogs() {
         </ComposableMap>
         <div className="flex gap-4 mt-2 flex-wrap">
           {[
-            { label: '1–10', color: '#bfdbfe' },
-            { label: '11–50', color: '#60a5fa' },
-            { label: '51–200', color: '#2563eb' },
-            { label: '200+', color: '#1e3a8a' },
+            { label: '1–10', color: '#fecaca' },
+            { label: '11–50', color: '#f87171' },
+            { label: '51–200', color: '#dc2626' },
+            { label: '200+', color: '#7f1d1d' },
           ].map(({ label, color }) => (
             <div key={label} className="flex items-center gap-1.5 text-xs text-gray-500">
               <div className="w-3 h-3 rounded-sm" style={{ background: color }} />
