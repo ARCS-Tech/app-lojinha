@@ -79,10 +79,12 @@ const adminAccessLogsRoute: FastifyPluginAsync = async (app) => {
     if (!ip) return reply.status(400).send({ error: 'ip query param required' })
 
     try {
-      const res = await fetch(`https://ipwho.is/${ip}`)
+      const res = await fetch(
+        `http://ip-api.com/json/${ip}?fields=status,message,continent,continentCode,country,countryCode,region,regionName,city,zip,lat,lon,timezone,isp,org,as,mobile,proxy,hosting,query`
+      )
       return await res.json()
     } catch {
-      return { success: false }
+      return { status: 'fail' }
     }
   })
 }

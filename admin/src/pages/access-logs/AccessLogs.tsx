@@ -45,7 +45,7 @@ export default function AccessLogs() {
           setGeoMap(new Map(geoCache.current))
         })
         .catch(() => {
-          geoCache.current.set(ip, { success: false })
+          geoCache.current.set(ip, { status: 'fail' })
           setGeoMap(new Map(geoCache.current))
         })
     })
@@ -53,7 +53,7 @@ export default function AccessLogs() {
 
   const countByNumericId = new Map<number, number>()
   geoMap.forEach((geo) => {
-    const numId = geo.country_code ? ALPHA2_TO_NUMERIC[geo.country_code] : undefined
+    const numId = geo.countryCode ? ALPHA2_TO_NUMERIC[geo.countryCode] : undefined
     if (numId) countByNumericId.set(numId, (countByNumericId.get(numId) ?? 0) + 1)
   })
 
@@ -85,7 +85,7 @@ export default function AccessLogs() {
   const totalPages = data?.totalPages ?? 1
 
   const uniqueIps = new Set(logs.map((l) => l.ip)).size
-  const uniqueCountries = new Set([...geoMap.values()].map((g) => g.country_code).filter(Boolean)).size
+  const uniqueCountries = new Set([...geoMap.values()].map((g) => g.countryCode).filter(Boolean)).size
   const today = new Date().toDateString()
   const todayCount = logs.filter((l) => new Date(l.createdAt).toDateString() === today).length
 
@@ -293,17 +293,17 @@ function LogRow({
   geo: GeoResult | undefined
   onClick: () => void
 }) {
-  const resolved = geo?.success !== undefined
+  const resolved = geo?.status !== undefined
   const locationText = !resolved
     ? null
-    : !geo?.success
+    : geo?.status === 'fail'
     ? '—'
-    : `${geo.country_code} · ${geo.city || geo.country}`
+    : `${geo?.countryCode} · ${geo?.city || geo?.country}`
 
   return (
     <tr
-      onClick={resolved ? onClick : undefined}
-      className={`${resolved ? 'cursor-pointer hover:bg-blue-50' : 'hover:bg-gray-50'} transition-colors`}
+      onClick={resolved && geo?.status === 'success' ? onClick : undefined}
+      className={`${resolved && geo?.status === 'success' ? 'cursor-pointer hover:bg-blue-50' : 'hover:bg-gray-50'} transition-colors`}
     >
       <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">{formatDate(log.createdAt)}</td>
       <td className="px-4 py-3 font-mono text-xs">{log.ip}</td>
@@ -351,14 +351,9 @@ function AccessLogDialog({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b">
-          <div className="flex items-center gap-3">
-            {geo.flag?.emoji && (
-              <span className="text-3xl leading-none">{geo.flag.emoji}</span>
-            )}
-            <div>
-              <p className="font-semibold text-gray-800 font-mono">{log.ip}</p>
-              <p className="text-xs text-gray-400">{formatDate(log.createdAt)}</p>
-            </div>
+          <div>
+            <p className="font-semibold text-gray-800 font-mono">{log.ip}</p>
+            <p className="text-xs text-gray-400">{formatDate(log.createdAt)}</p>
           </div>
           <button
             onClick={onClose}
@@ -369,46 +364,39 @@ function AccessLogDialog({
         </div>
 
         <div className="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
-          {!geo.success ? (
+          {geo.status === 'fail' ? (
             <p className="text-sm text-gray-400 text-center py-4">Geolocalização indisponível para este IP.</p>
           ) : (
             <>
               {/* Localização */}
               <Section title="Localização">
-                <Row label="País" value={geo.country && geo.country_code ? `${geo.country} (${geo.country_code})` : geo.country} />
-                <Row label="Continente" value={geo.continent} />
-                <Row label="Região" value={geo.region && geo.region_code ? `${geo.region} (${geo.region_code})` : geo.region} />
+                <Row label="País" value={geo.country && geo.countryCode ? `${geo.country} (${geo.countryCode})` : geo.country} />
+                <Row label="Continente" value={geo.continent && geo.continentCode ? `${geo.continent} (${geo.continentCode})` : geo.continent} />
+                <Row label="Região" value={geo.regionName && geo.region ? `${geo.regionName} (${geo.region})` : geo.regionName} />
                 <Row label="Cidade" value={geo.city} />
-                <Row label="CEP" value={geo.postal} />
-                <Row label="Coordenadas" value={geo.latitude != null && geo.longitude != null ? `${geo.latitude}, ${geo.longitude}` : undefined} />
-                <Row label="Capital" value={geo.capital} />
-                <Row label="União Europeia" value={geo.is_eu != null ? (geo.is_eu ? 'Sim' : 'Não') : undefined} />
+                <Row label="CEP" value={geo.zip} />
+                <Row label="Coordenadas" value={geo.lat != null && geo.lon != null ? `${geo.lat}, ${geo.lon}` : undefined} />
               </Section>
 
               {/* Rede */}
-              {geo.connection && (
-                <Section title="Rede / ISP">
-                  <Row label="ISP" value={geo.connection.isp} />
-                  <Row label="Organização" value={geo.connection.org} />
-                  <Row label="ASN" value={geo.connection.asn ? `AS${geo.connection.asn}` : undefined} />
-                  <Row label="Domínio" value={geo.connection.domain} />
-                </Section>
-              )}
+              <Section title="Rede / ISP">
+                <Row label="ISP" value={geo.isp} />
+                <Row label="Organização" value={geo.org} />
+                <Row label="AS" value={geo.as} />
+                <Row label="Proxy / VPN" value={geo.proxy != null ? (geo.proxy ? 'Sim' : 'Não') : undefined} />
+                <Row label="Hosting" value={geo.hosting != null ? (geo.hosting ? 'Sim' : 'Não') : undefined} />
+                <Row label="Mobile" value={geo.mobile != null ? (geo.mobile ? 'Sim' : 'Não') : undefined} />
+              </Section>
 
               {/* Fuso horário */}
               {geo.timezone && (
                 <Section title="Fuso Horário">
-                  <Row label="Timezone" value={geo.timezone.id} />
-                  <Row label="Abreviação" value={geo.timezone.abbr} />
-                  <Row label="UTC" value={geo.timezone.utc} />
-                  <Row label="Horário de verão" value={geo.timezone.is_dst ? 'Sim' : 'Não'} />
+                  <Row label="Timezone" value={geo.timezone} />
                 </Section>
               )}
 
               {/* Acesso */}
               <Section title="Acesso">
-                <Row label="Tipo de IP" value={geo.type} />
-                <Row label="DDI" value={geo.calling_code ? `+${geo.calling_code}` : undefined} />
                 {log.user && (
                   <>
                     <Row label="Usuário" value={log.user.firstName} />
