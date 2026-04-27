@@ -8,18 +8,18 @@ datasource db {
 }
 
 model User {
-  id             String   @id @default(cuid())
-  telegramId     BigInt   @unique
+  id             String      @id @default(cuid())
+  telegramId     BigInt      @unique
   firstName      String
   lastName       String?
   username       String?
   languageCode   String?
   selectedCityId String?
-  city           City?    @relation(fields: [selectedCityId], references: [id])
+  city           City?       @relation(fields: [selectedCityId], references: [id])
   orders         Order[]
   accessLogs     AccessLog[]
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 
   @@map("users")
 }
