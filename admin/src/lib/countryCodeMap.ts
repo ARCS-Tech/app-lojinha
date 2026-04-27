@@ -34,6 +34,7 @@ export interface GeoResult {
 }
 
 export async function resolveGeo(ip: string): Promise<GeoResult> {
+  // http:// required — ip-api.com HTTPS needs a paid plan
   const res = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,countryCode,city`)
-  return res.json()
+  return res.json() as Promise<GeoResult>
 }
