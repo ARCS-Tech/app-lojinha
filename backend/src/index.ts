@@ -1,5 +1,6 @@
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
+import cron from 'node-cron'
 import prismaPlugin from './plugins/prisma.js'
 import authRoute from './routes/auth.js'
 import citiesRoute from './routes/cities.js'
@@ -16,7 +17,7 @@ import adminAccessLogsRoute from './routes/admin/access-logs.js'
 import usersRoute from './routes/users.js'
 
 export function buildApp() {
-  const app = Fastify({ logger: true })
+  const app = Fastify({ logger: true, trustProxy: true })
 
   app.register(cors, { origin: true })
   app.register(prismaPlugin)
@@ -41,5 +42,13 @@ export function buildApp() {
 
 if (process.argv[1] === new URL(import.meta.url).pathname) {
   const app = buildApp()
+
+  // Daily cleanup at 03:00 — deletes access logs older than 30 days
+  cron.schedule('0 3 * * *', async () => {
+    const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    await app.prisma.accessLog.deleteMany({ where: { createdAt: { lt: cutoff } } })
+    app.log.info('Access logs cleanup completed')
+  })
+
   await app.listen({ port: Number(process.env.PORT ?? 3000), host: '0.0.0.0' })
 }
